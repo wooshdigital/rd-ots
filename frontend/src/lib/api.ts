@@ -11,7 +11,11 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Add any auth tokens here if needed
+    // Add session token from localStorage
+    const sessionToken = localStorage.getItem('session_token');
+    if (sessionToken) {
+      config.headers.Authorization = `Bearer ${sessionToken}`;
+    }
     return config;
   },
   (error) => {
@@ -23,7 +27,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error.response?.data?.message || error.message || 'An error occurred';
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      // Clear session and redirect to login
+      localStorage.removeItem('session_token');
+      window.location.href = '/login';
+    }
+
+    const message = error.response?.data?.error || error.response?.data?.message || error.message || 'An error occurred';
     return Promise.reject(new Error(message));
   }
 );

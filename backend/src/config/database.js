@@ -390,4 +390,6 @@ export const dbAdapter = {
   },
 };
 
+export { db as pool };
+
 export default dbAdapter;

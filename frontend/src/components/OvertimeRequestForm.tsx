@@ -15,10 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { cn } from '../lib/utils';
 import ConfirmationModal from './ConfirmationModal';
 import useRequestStore from '../store/useRequestStore';
+import { useAuth } from '../contexts/AuthContext';
 
 // Validation schema
 const formSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
   requestType: z.enum(['Overtime', 'Undertime'], {
     required_error: 'Please select a request type',
   }),
@@ -45,6 +45,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function OvertimeRequestForm() {
+  const { user } = useAuth();
   const { submitRequest, checkDuplicate, isLoading, error, successMessage, clearMessages } = useRequestStore();
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -67,7 +68,6 @@ export default function OvertimeRequestForm() {
     },
   });
 
-  const email = watch('email');
   const dateAffected = watch('dateAffected');
 
   const onSubmit = async (data: FormData) => {
@@ -85,11 +85,12 @@ export default function OvertimeRequestForm() {
     try {
       setShowConfirmation(false);
 
-      if (!pendingData) return;
+      if (!pendingData || !user?.email) return;
 
-      // Convert Date to string format for API
+      // Convert Date to string format for API and add user email
       const requestData = {
         ...pendingData,
+        email: user.email,
         dateAffected: format(pendingData.dateAffected, 'yyyy-MM-dd'),
       };
 
@@ -156,29 +157,21 @@ export default function OvertimeRequestForm() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Email */}
+          {/* Email (Read-only) */}
           <div className="space-y-2 group">
             <Label htmlFor="email" className="text-sm font-semibold text-foreground flex items-center gap-2">
               <span>Email Address</span>
-              <span className="text-destructive">*</span>
             </Label>
             <Input
               id="email"
               type="email"
-              placeholder="your.email@rooche.digital"
-              {...register('email')}
-              className={`transition-all duration-200 ${
-                errors.email 
-                  ? 'border-destructive focus-visible:ring-destructive' 
-                  : 'focus-visible:ring-primary group-hover:border-primary/50'
-              }`}
+              value={user?.email || ''}
+              disabled
+              className="bg-muted/50 cursor-not-allowed text-muted-foreground"
             />
-            {errors.email && (
-              <p className="text-sm text-destructive flex items-center gap-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                <AlertCircle className="h-3 w-3" />
-                {errors.email.message}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              Using your authenticated account email
+            </p>
           </div>
 
           {/* Type of Request */}

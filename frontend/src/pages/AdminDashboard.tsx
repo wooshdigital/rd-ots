@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Textarea } from '../components/ui/textarea';
 import useRequestStore from '../store/useRequestStore';
+import { useAuth } from '../contexts/AuthContext';
 
 interface OvertimeRequest {
   id: number;
@@ -22,6 +23,7 @@ interface OvertimeRequest {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth(); // Get authenticated user
   const {
     requests,
     fetchPendingRequests,
@@ -44,8 +46,8 @@ export default function AdminDashboard() {
   const handleApprove = async (request: OvertimeRequest) => {
     try {
       clearMessages();
-      // In a real app, you'd get the admin email from auth context
-      await approveRequest(request.id, 'admin@roochedigital.com');
+      // Approve request (approvedBy is now set automatically from session in backend)
+      await approveRequest(request.id);
       // Refresh the list
       fetchPendingRequests();
     } catch (err) {
@@ -69,8 +71,8 @@ export default function AdminDashboard() {
 
     try {
       clearMessages();
-      // In a real app, you'd get the admin email from auth context
-      await rejectRequest(selectedRequest.id, 'admin@roochedigital.com', rejectReason);
+      // Reject request (rejectedBy is now set automatically from session in backend)
+      await rejectRequest(selectedRequest.id, rejectReason);
       setShowRejectModal(false);
       setSelectedRequest(null);
       setRejectReason('');

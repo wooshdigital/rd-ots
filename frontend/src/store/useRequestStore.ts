@@ -49,8 +49,8 @@ interface RequestStore {
   fetchPendingRequests: () => Promise<OvertimeRequest[]>;
   fetchStatistics: (employeeId?: string | null) => Promise<Statistics>;
   checkDuplicate: (email: string, payrollDate: string) => Promise<DuplicateCheckResult>;
-  approveRequest: (id: number, approvedBy: string) => Promise<any>;
-  rejectRequest: (id: number, rejectedBy: string, reason: string) => Promise<any>;
+  approveRequest: (id: number) => Promise<any>;
+  rejectRequest: (id: number, reason: string) => Promise<any>;
   reset: () => void;
 }
 
@@ -181,11 +181,11 @@ const useRequestStore = create<RequestStore>((set, get) => ({
     }
   },
 
-  // Approve request
-  approveRequest: async (id, approvedBy) => {
+  // Approve request (approvedBy is set from session token in backend)
+  approveRequest: async (id) => {
     set({ isLoading: true, error: null, successMessage: null });
     try {
-      const response = await api.post(`/requests/${id}/approve`, { approvedBy });
+      const response = await api.post(`/requests/${id}/approve`, {});
       set({
         isLoading: false,
         successMessage: response.data.message || 'Request approved successfully!',
@@ -200,11 +200,11 @@ const useRequestStore = create<RequestStore>((set, get) => ({
     }
   },
 
-  // Reject request
-  rejectRequest: async (id, rejectedBy, reason) => {
+  // Reject request (rejectedBy is set from session token in backend)
+  rejectRequest: async (id, reason) => {
     set({ isLoading: true, error: null, successMessage: null });
     try {
-      const response = await api.post(`/requests/${id}/reject`, { rejectedBy, reason });
+      const response = await api.post(`/requests/${id}/reject`, { reason });
       set({
         isLoading: false,
         successMessage: response.data.message || 'Request rejected successfully!',

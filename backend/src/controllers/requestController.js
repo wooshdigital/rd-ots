@@ -193,17 +193,38 @@ class RequestController {
   }
 
   /**
-   * Get pending requests
+   * Get pending requests (with role-based filtering)
    * GET /api/requests/pending
    */
   async getPendingRequests(req, res, next) {
     try {
-      const requests = await requestService.getPendingRequests();
+      const user = req.user; // Set by verifySession middleware
+      let requests = await requestService.getPendingRequests();
+
+      // Apply role-based filtering
+      if (user.role === 'Owner' || user.role === 'HR') {
+        // Owner and HR can see ALL pending requests
+        // No filtering needed
+      } else if (user.role === 'Project Coordinator' || user.erpnext_employee_id) {
+        // Project Coordinators and other supervisors can only see requests from their direct reports
+        // Filter requests where the employee reports to this user
+        const erpnextService = await import('../services/erpnextService.js');
+        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
+        const directReportIds = directReports.map(emp => emp.employee_id);
+
+        requests = requests.filter(request =>
+          directReportIds.includes(request.frappe_employee_id)
+        );
+      } else {
+        // Regular employees cannot access pending requests
+        requests = [];
+      }
 
       res.json({
         success: true,
         count: requests.length,
-        data: requests
+        data: requests,
+        userRole: user.role // Include role for debugging
       });
     } catch (error) {
       next(error);
@@ -293,16 +314,10 @@ class RequestController {
   async approveRequest(req, res, next) {
     try {
       const { id } = req.params;
-      const { approvedBy } = req.body;
+      const user = req.user; // Get from session
+      const approvedBy = user.email; // Use logged-in user's email
 
-      if (!approvedBy) {
-        return res.status(400).json({
-          success: false,
-          message: 'approvedBy is required'
-        });
-      }
-
-      logger.info('Approving request', { id, approvedBy });
+      logger.info('Approving request', { id, approvedBy, approverRole: user.role });
 
       // Step 1: Update request status in database
       const request = await requestService.approveRequest(id, approvedBy);
@@ -377,16 +392,18 @@ class RequestController {
   async rejectRequest(req, res, next) {
     try {
       const { id } = req.params;
-      const { rejectedBy, reason } = req.body;
+      const { reason } = req.body;
+      const user = req.user; // Get from session
+      const rejectedBy = user.email; // Use logged-in user's email
 
-      if (!rejectedBy || !reason) {
+      if (!reason) {
         return res.status(400).json({
           success: false,
-          message: 'rejectedBy and reason are required'
+          message: 'reason is required'
         });
       }
 
-      logger.info('Rejecting request', { id, rejectedBy });
+      logger.info('Rejecting request', { id, rejectedBy, rejectorRole: user.role });
 
       // Update request status in database
       const request = await requestService.rejectRequest(id, rejectedBy, reason);

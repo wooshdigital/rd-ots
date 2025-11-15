@@ -1,0 +1,3282 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        0
+      ],
+      "id": "66157f5d-ba78-46d5-8d73-3964b3fe3184",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 10,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/18Zln0TlI7PfrEHFaBr8BycAsE7yWX9aEM0tzdOceYN8/edit?gid=2000912532#gid=2000912532",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2000912532,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18Zln0TlI7PfrEHFaBr8BycAsE7yWX9aEM0tzdOceYN8/edit#gid=2000912532"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2304,
+        768
+      ],
+      "id": "6730eeb8-f003-4a73-9650-36ba817ca9d3",
+      "name": "Google Sheets Overtime Trigger",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "KU6Wy1H73PzEFlYb",
+          "name": "Google Sheets Noreplyplease Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Company%20Program?&fields=[\"name\",\"program_manager\"]&filters=[[\"name\", \"=\", \"\nOvertime System\"], [\"status\", \"=\", \"Active\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2080,
+        768
+      ],
+      "id": "84ebb9a9-dbc6-4a70-8da7-45dff4ad5c17",
+      "name": "Get Overtime System if enabled",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3075aa73-6f5a-43d3-949b-73b393e3d0f0",
+              "leftValue": "={{ $json.data[0].name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1856,
+        768
+      ],
+      "id": "8c4ed27c-f2c5-4549-8e8e-c43e63b6b4ad",
+      "name": "if Overtime System Incentive is turned on"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "docType": "Employee",
+        "limit": 1,
+        "options": {
+          "fields": [
+            "employee_name",
+            "employee",
+            "reports_to",
+            "designation"
+          ],
+          "filters": {
+            "customProperty": [
+              {
+                "field": "company_email",
+                "value": "={{ $json[\"Email Address\"] }}"
+              },
+              {
+                "field": "status",
+                "value": "Active"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        240
+      ],
+      "id": "b4899af8-7ba8-46cb-8231-24da4ae2b6a5",
+      "name": "Find the employee who filled out the form",
+      "alwaysOutputData": true,
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "58e641bc-f2bf-4f11-afa1-ca7efc8b2eae",
+              "leftValue": "={{ $json.employee_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        240
+      ],
+      "id": "736e6cae-81c3-4bce-add2-447e690522c2",
+      "name": "If employee is found"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Overtime Trigger').item.json[\"Email Address\"] }}",
+        "subject": "Your account isn't recognized by our system",
+        "message": "=<!DOCTYPE html>\n\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.button {\ndisplay: inline-block;\npadding: 10px 20px;\nmargin: 10px 5px 10px 0;\nborder-radius: 5px;\ntext-decoration: none;\ncolor: #fff !important;\nfont-weight: bold;\n}\n.approve {\nbackground-color: #28a745;\n}\n.reject {\nbackground-color: #dc3545;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n.edit-link {\nfont-size: 0.9em;\ncolor: #555;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n<p>Hi there,</p>\n<p>We received a request from your email address, but unfortunately, it is not registered in our system. We were unable to process your request.</p>\n\n    <div class=\"details\">\n        <strong>Notice: Email Not Recognized</strong>\n        <p>The email address <strong>{{ $('Google Sheets Overtime Trigger').item.json[\"Email Address\"] }}</strong> could not be found in our records.</p>\n    </div>\n\n    <p>To resolve this, please take one of the following actions:</p>\n    \n    <ul>\n        <li>Please try again using your official <strong>work email address</strong> if you used a different one.</li>\n        <li>If you are using your correct work email, please contact our <strong>HR / Administrative Aide</strong> to get your email registered in the system.</li>\n    </ul>\n\n    <p>We're here to help if you have any questions.</p>\n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -736,
+        480
+      ],
+      "id": "b3875900-6796-43a3-8cfb-9c0c3aba570f",
+      "name": "Send an unauthorized email message",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Additional%20Salary?&fields=[\"employee\"]&filters=[[\"employee\", \"=\", \"{{ $json.employee }}\"], [\"salary_component\", \"=\", \"Overtime\"], [\"docstatus\", \"=\", \"1\"], [\"payroll_date\", \"=\", \"{{ $('Loop Over Items1').item.json[\"Date Affected\"] }}\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -288,
+        -96
+      ],
+      "id": "83bb479e-9c34-438c-83de-6979aeae8bfa",
+      "name": "Check if Additional Salary of that date has been filled already",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Overtime Trigger').item.json[\"Email Address\"] }}",
+        "subject": "=Update on Your {{ $('Google Sheets Overtime Trigger').item.json[\"Type of request\"] }} Request for {{ $('Google Sheets Overtime Trigger').item.json[\"Date Affected\"] }}",
+        "message": "=<!DOCTYPE html>\n\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.button {\ndisplay: inline-block;\npadding: 10px 20px;\nmargin: 10px 5px 10px 0;\nborder-radius: 5px;\ntext-decoration: none;\ncolor: #fff !important;\nfont-weight: bold;\n}\n.approve {\nbackground-color: #28a745;\n}\n.reject {\nbackground-color: #dc3545;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n.edit-link {\nfont-size: 0.9em;\ncolor: #555;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n<p>Hey {{ $('Find the employee who filled out the form').item.json.employee_name }},</p>\n<p>We're writing to provide an update on your recent overtime request. We were unable to process your filing because our records show an existing overtime request for the same date.</p>\n\n    <div class=\"details\">\n        <strong>Notice: Duplicate Filing</strong>\n        <p>A request has already been filed under your name for the following date:</p>\n        <ul>\n            <li><strong>Date: {{ $('Google Sheets Overtime Trigger').item.json[\"Date Affected\"] }}</strong> </li>\n        </ul>\n        <p>To prevent processing errors, we can only accept one filing per person per day.</p>\n    </div>\n\n    <p>If you intended to file for a different day, please feel free to submit a new request with the correct date.</p>\n\n    <p>If you believe this is an error or have any questions regarding your overtime, please contact our <strong>HR / Administrative Aide</strong> for assistance.</p>\n    \n    <p>Thanks a bunch,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        96
+      ],
+      "id": "e2b94693-3eb9-49b0-ba4e-a2cfd7ca8767",
+      "name": "Send an email about duplicate OT entry",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Loop Over Items1').item.json[\"Email Address\"] }}",
+        "subject": "Confirmation: Your Request Has Been Received",
+        "message": "=<!DOCTYPE html>\n\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.button {\ndisplay: inline-block;\npadding: 10px 20px;\nmargin: 10px 5px 10px 0;\nborder-radius: 5px;\ntext-decoration: none;\ncolor: #fff !important;\nfont-weight: bold;\n}\n.approve {\nbackground-color: #28a745;\n}\n.reject {\nbackground-color: #dc3545;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n.edit-link {\nfont-size: 0.9em;\ncolor: #555;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n<p>Hey {{ $('Find the employee who filled out the form').item.json.employee_name }},</p>\n<p>This is a quick confirmation that we have successfully received your request. It is now in the queue and pending review.</p>\n\n    <div class=\"details\">\n        <strong>Request Summary:</strong>\n        <ul>\n            <li><strong>Request Type:</strong> {{ $('Loop Over Items1').item.json[\"Type of request\"] }}</li>\n            <li><strong>Number of hours:</strong> {{ $('Loop Over Items1').item.json[\"Number of hours\"] }} </li>\n\n            <li><strong>Date Submitted:</strong> {{ $now.format('MM-dd-yyyy') }}</li>\n            <li><strong>Current Status:</strong> <span style=\"color: #ff8c00; font-weight: bold;\">Pending Approval</span></li>\n        </ul>\n    </div>\n\n    <p>You don't need to take any action at this time. We will send you another email notification as soon as the status of your request is updated by the approver.</p>\n    \n    <p>Thanks for your patience,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        384,
+        -192
+      ],
+      "id": "3e300b7c-24fb-42dc-b7a3-9faa66c314ce",
+      "name": "Confirmation Email of receipt",
+      "webhookId": "3f2ff757-915a-4070-b6f2-dd90c2e4e09b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"designation\", \"like\", \"%Human Resources%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -432
+      ],
+      "id": "f8e89319-3c64-4144-a83b-079f7ecf9146",
+      "name": "Get HR Employee information",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"designation\", \"like\", \"%Project Coordinator%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        144
+      ],
+      "id": "a9e216cd-2a45-4aa6-af86-bb5d611e9beb",
+      "name": "Get Project Coordinators information",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        -432
+      ],
+      "id": "2ebcb955-c16d-4454-bc6a-bf4781147566",
+      "name": "extract hr information"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        144
+      ],
+      "id": "2d283506-d4e1-4238-82b0-266d8e63b522",
+      "name": "extract pc information"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.company_email }}",
+        "subject": "=Overtime Request Pending Your Approval",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\n    body {\n        font-family: Arial, sans-serif;\n        line-height: 1.6;\n        color: #333;\n    }\n    .container {\n        padding: 20px;\n        max-width: 600px;\n        margin: auto;\n    }\n    .button {\n        display: inline-block;\n        padding: 10px 20px;\n        margin: 10px 5px 10px 0;\n        border-radius: 5px;\n        text-decoration: none;\n        color: #fff !important;\n        font-weight: bold;\n    }\n    .approve {\n        background-color: #28a745;\n    }\n    .reject {\n        background-color: #dc3545;\n    }\n    .details {\n        background-color: #f4f4f4;\n        padding: 15px;\n        border-radius: 5px;\n        margin: 20px 0;\n    }\n    .edit-link {\n        font-size: 0.9em;\n        color: #555;\n    }\n</style>\n</head>\n<body>\n    <div class=\"container\">\n        <p>Hi {{ $json.first_name }} {{ $json.last_name }},</p>\n        <p>An overtime request has been submitted and requires your approval. Please review the details below and take action.</p>\n\n        <div class=\"details\">\n            <strong>Overtime Request Details:</strong>\n            <ul>\n                <li><strong>Employee:</strong> {{ $('Find the employee who filled out the form').item.json.employee_name }}</li>\n                <li><strong>Date of Overtime:</strong> {{ $('Loop Over Items1').item.json[\"Date Affected\"] }}</li>\n                <li><strong>Hours Requested:</strong> {{ $('Loop Over Items1').item.json[\"Number of hours\"] }}</li>\n                <li><strong>Reason:</strong> {{ $('Loop Over Items1').item.json[\"Reason for Overtime / Undertime\"] }}</li>\n                <li><strong>Affected Project/s:</strong> {{ $('Loop Over Items1').item.json[\"Project/Task Associated\"] }}</li>\n            </ul>\n        </div>\n\n        <p>Please click one of the buttons below to approve or reject this request.</p>\n        \n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=1&approver_id={{ $json.employee }}&id={{ $('Cache the record').item.json.id }}\" class=\"button approve\">Approve Request</a>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=0&approver_id={{ $json.employee }}&id={{ $('Cache the record').item.json.id }}\" class=\"button reject\">Reject Request</a>\n\n        <p>Thanks,</p>\n        <p><em>Rooche Digital Automations</em></p>\n    </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "144f067d-579d-4a0b-9298-a11a69a7f7f9",
+      "name": "Send an OT confirmation to approvers",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "Overtime-Requests",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "payroll_date",
+              "fieldValue": "={{ $('Loop Over Items1').item.json[\"Date Affected\"] }}"
+            },
+            {
+              "fieldId": "projects_affected",
+              "fieldValue": "={{ $('Loop Over Items1').item.json[\"Project/Task Associated\"] }}"
+            },
+            {
+              "fieldId": "reason",
+              "fieldValue": "={{ $('Loop Over Items1').item.json[\"Reason for Overtime / Undertime\"] }}"
+            },
+            {
+              "fieldId": "hours",
+              "fieldValue": "={{ $('Loop Over Items1').item.json[\"Number of hours\"] }}"
+            },
+            {
+              "fieldId": "frappe_employee_id",
+              "fieldValue": "={{ $('Find the employee who filled out the form').item.json.employee }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -192
+      ],
+      "id": "7cf93774-a7ee-43f4-8549-78ffdd5f990e",
+      "name": "Cache the record",
+      "credentials": {
+        "supabaseApi": {
+          "id": "pVltU0se0L6uweCK",
+          "name": "Supabase account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "5a661dcd-b7dc-421a-a6cf-252729c4e999",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2304,
+        2176
+      ],
+      "id": "fbd91429-5cc8-4ad5-a6ce-8e7a02107c84",
+      "name": "Approve or Reject or Reject with reason",
+      "webhookId": "5a661dcd-b7dc-421a-a6cf-252729c4e999"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Overtime-Requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Approve or Reject or Reject with reason').item.json.query.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "approved_by",
+              "fieldValue": "={{ $('Approve or Reject or Reject with reason').item.json.query.approver_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        1792
+      ],
+      "id": "120e4764-7580-4060-b98b-15262f4040c6",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "pVltU0se0L6uweCK",
+          "name": "Supabase account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $('Get OT transaction details').item.json.frappe_employee_id }}"
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        1792
+      ],
+      "id": "42d0f234-184c-48ec-80be-1e2ab2ad69a5",
+      "name": "Get a document",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.company_email }}",
+        "subject": "Your Overtime Request has been Approved",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.button {\ndisplay: inline-block;\npadding: 10px 20px;\nmargin: 10px 5px 10px 0;\nborder-radius: 5px;\ntext-decoration: none;\ncolor: #fff !important;\nfont-weight: bold;\n}\n.approve {\nbackground-color: #28a745;\n}\n.reject {\nbackground-color: #dc3545;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n.edit-link {\nfont-size: 0.9em;\ncolor: #555;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n<p>Hey {{ $json.employee_name }},</p>\n<p>Good news! Your recent overtime request has been reviewed and approved.</p>\n\n    <div class=\"details\">\n        <strong>Approved Request Summary:</strong>\n        <ul>\n            <li><strong>Request Type:</strong> Overtime</li>\n            <li><strong>Number of hours:</strong> {{ $('Get OT transaction details').item.json.hours }} </li>\n            <li><strong>Payroll Date:</strong> {{ $('Get OT transaction details').item.json.payroll_date }}</li>\n            <li><strong>Final Status:</strong> <span style=\"color: #28a745; font-weight: bold;\">Approved by {{ $('Get a document1').item.json.employee_name }}</span></li>\n        </ul>\n    </div>\n\n    <p>No further action is needed from you. The approved hours will be included in the next payroll cycle.</p>\n    \n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        1792
+      ],
+      "id": "c3871612-7298-4e2b-8589-c8f032111269",
+      "name": "Confirmation Email of receipt1",
+      "webhookId": "3f2ff757-915a-4070-b6f2-dd90c2e4e09b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $('Approve or Reject or Reject with reason').item.json.query.approver_id }}"
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        1792
+      ],
+      "id": "145a03e9-f7b9-4103-8eec-3c3fa75ac90b",
+      "name": "Get a document1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Request Approved</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #28a745; /* Green color for success */\n        }\n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Request Approved</h1>\n        <p>Thank you. Your decision has been recorded successfully.</p>\n        <p>The status for this request has been updated to \"Approved.\"</p>\n        <div class=\"record-info\">\n            <p>You may now safely close this window.</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        160,
+        1792
+      ],
+      "id": "ba1c6131-770c-460e-ad3a-9850caea816c",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78cae99c-e5ac-4bde-a365-89bc025c069d",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1632,
+        2080
+      ],
+      "id": "54da50c4-e33a-46bd-b386-ea178c86bed6",
+      "name": "If the OT transaction ID exists"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Transaction Not Found</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #dc3545; /* Red color for error */\n        }\n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Transaction Not Found</h1>\n        <p>We could not find the overtime request you are trying to action.</p>\n        <p>This may be because the request was already processed, deleted, or the link is invalid.</p>\n        <div class=\"record-info\">\n            <p>Please contact your system administrator if you believe this is an error. You can now close this window.</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1408,
+        2176
+      ],
+      "id": "a424d599-ef07-4a94-8d2d-6860e4cb4317",
+      "name": "Respond with invalid transaction ID"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ff3373ff-ae5b-4409-999c-e60a9934d781",
+              "leftValue": "={{ $json.approved_by }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1408,
+        1984
+      ],
+      "id": "3904be7a-610c-4ab1-8da7-bff494b2ab2f",
+      "name": "If the transaction has not been approved yet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "100ed131-aee0-4932-9206-e67ee79d3057",
+              "leftValue": "={{ $('Approve or Reject or Reject with reason').item.json.query.action }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1184,
+        1888
+      ],
+      "id": "fa6cdc28-3365-4f04-9098-0eec41328478",
+      "name": "If action is approve"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "Overtime-Requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.query.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1856,
+        2080
+      ],
+      "id": "f20af6ee-b9c2-4dfa-b57d-ca98dc56de62",
+      "name": "Get OT transaction details",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "pVltU0se0L6uweCK",
+          "name": "Supabase account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $('Get OT transaction details').item.json.approved_by }}"
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        2176
+      ],
+      "id": "28494849-9dd8-438a-8eb0-a539af3915dc",
+      "name": "Get approver details",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Request Already Processed</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #007bff; /* Blue for informational message */\n        }\n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n            text-align: left;\n            display: inline-block;\n        }\n        .record-info p {\n            margin: 5px 0;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Request Already Processed</h1>\n        <p>This overtime request has already been actioned. No further changes can be made.</p>\n        <div class=\"record-info\">\n            <p><strong>Actioned By:</strong> {{ $json.employee_name }}</p>\n        </div>\n        <p style=\"margin-top: 20px;\">You may now safely close this window.</p>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -960,
+        2176
+      ],
+      "id": "8d47335f-d28e-4426-b9ab-f33305b61313",
+      "name": "Respond that the request has been approved by someone else"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Provide Rejection Reason</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            width: 90%;\n            max-width: 500px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #dc3545; /* Red color for rejection */\n            margin-top: 0;\n        }\n        p {\n            font-size: 1.1em;\n            margin-bottom: 20px;\n        }\n        textarea {\n            width: 100%;\n            padding: 10px;\n            border-radius: 5px;\n            border: 1px solid #ccc;\n            font-family: Arial, sans-serif;\n            font-size: 1em;\n            min-height: 100px;\n            margin-bottom: 20px;\n            box-sizing: border-box;\n        }\n        .submit-btn {\n            display: inline-block;\n            width: 100%;\n            padding: 12px 20px;\n            border-radius: 5px;\n            text-decoration: none;\n            color: #fff !important;\n            font-weight: bold;\n            background-color: #dc3545; /* Red color */\n            border: none;\n            cursor: pointer;\n            font-size: 1.1em;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Reason for Rejection</h1>\n        <p>Please provide a reason for rejecting this request. This will be recorded and sent to the employee.</p>\n        \n        <form action=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999\" method=\"POST\">\n            <textarea name=\"reject_reason\" placeholder=\"e.g., Duplicate request, incorrect hours, not a valid reason for overtime...\" required></textarea>\n\n            <input type=\"hidden\" name=\"action\" value=\"{{ $('Approve or Reject or Reject with reason').item.json.query.action }}\">\n            <input type=\"hidden\" name=\"approver_id\" value=\"{{ $('Approve or Reject or Reject with reason').item.json.query.approver_id }}\">\n            <input type=\"hidden\" name=\"id\" value=\"{{ $('Approve or Reject or Reject with reason').item.json.query.id }}\">\n\n            <button type=\"submit\" class=\"submit-btn\">Submit Rejection</button>\n        </form>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -960,
+        1984
+      ],
+      "id": "4335ad2a-54b2-48a7-bb53-d0e692e1a2f4",
+      "name": "Respond and ask the reason it is rejected"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5a661dcd-b7dc-421a-a6cf-252729c4e999",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2304,
+        2688
+      ],
+      "id": "3fc31cfd-ff60-4636-99d9-34f5fc27d4fe",
+      "name": "Webhook",
+      "webhookId": "00db7b7c-a111-4717-bc31-0d3df9cf4118"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "Overtime-Requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        2688
+      ],
+      "id": "bda9d2fd-3207-478b-9d43-5c216028a25b",
+      "name": "Get OT transaction details1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "pVltU0se0L6uweCK",
+          "name": "Supabase account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78cae99c-e5ac-4bde-a365-89bc025c069d",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1856,
+        2688
+      ],
+      "id": "1ebc857f-1094-49a9-b253-5b1446fc4464",
+      "name": "If the OT transaction ID exists1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Transaction Not Found</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #dc3545; /* Red color for error */\n        }\n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Transaction Not Found</h1>\n        <p>We could not find the overtime request you are trying to action.</p>\n        <p>This may be because the request was already processed, deleted, or the link is invalid.</p>\n        <div class=\"record-info\">\n            <p>Please contact your system administrator if you believe this is an error. You can now close this window.</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1632,
+        2784
+      ],
+      "id": "50f6a567-5dff-41c7-9da2-4bb2fd689d74",
+      "name": "Respond with invalid transaction ID1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ff3373ff-ae5b-4409-999c-e60a9934d781",
+              "leftValue": "={{ $json.approved_by }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1632,
+        2592
+      ],
+      "id": "090a5468-79cc-4aa1-afac-c5d9e447425c",
+      "name": "If the transaction has not been approved yet1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $('Get OT transaction details1').item.json.approved_by }}"
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        2688
+      ],
+      "id": "dc444823-5a13-4e91-b054-6184f382cbf3",
+      "name": "Get approver details1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Request Already Processed</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #007bff; /* Blue for informational message */\n        }\n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n            text-align: left;\n            display: inline-block;\n        }\n        .record-info p {\n            margin: 5px 0;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Request Already Processed</h1>\n        <p>This overtime request has already been actioned. No further changes can be made.</p>\n        <div class=\"record-info\">\n            <p><strong>Actioned By:</strong> {{ $json.employee_name }}</p>\n        </div>\n        <p style=\"margin-top: 20px;\">You may now safely close this window.</p>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1184,
+        2688
+      ],
+      "id": "87c29e28-ded4-4e00-a901-3e5920923e3d",
+      "name": "Respond that the request has been approved by someone else1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Overtime-Requests",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Webhook').item.json.body.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "approved_by",
+              "fieldValue": "={{ $('Webhook').item.json.body.approver_id }}"
+            },
+            {
+              "fieldId": "reject_reason",
+              "fieldValue": "={{ $('Webhook').item.json.body.reject_reason }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        2496
+      ],
+      "id": "123d5905-992b-4446-872f-7231b3e56964",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "pVltU0se0L6uweCK",
+          "name": "Supabase account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $('Get OT transaction details1').item.json.frappe_employee_id }}"
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        2496
+      ],
+      "id": "044728ee-9a31-4415-be76-ee0c3bdaea76",
+      "name": "Get a document2",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.company_email }}",
+        "subject": "Your Overtime Request has been Rejected",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.button {\ndisplay: inline-block;\npadding: 10px 20px;\nmargin: 10px 5px 10px 0;\nborder-radius: 5px;\ntext-decoration: none;\ncolor: #fff !important;\nfont-weight: bold;\n}\n.approve {\nbackground-color: #28a745;\n}\n.reject {\nbackground-color: #dc3545;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n.edit-link {\nfont-size: 0.9em;\ncolor: #555;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n<p>Hey {{ $json.employee_name }},</p>\n<p>We're writing to provide an update on your recent overtime request. After review, the request could not be approved at this time.</p>\n\n    <div class=\"details\">\n        <strong>Request Status & Details:</strong>\n        <ul>\n            <li><strong>Request Type:</strong> Overtime</li>\n            <li><strong>Number of hours:</strong> {{ $('Get OT transaction details1').item.json.hours }} </li>\n            <li><strong>Payroll Date:</strong> {{ $('Get OT transaction details1').item.json.payroll_date }}</li>\n            <li><strong>Final Status:</strong> <span style=\"color: #dc3545; font-weight: bold;\">Rejected by {{ $('Get a document3').item.json.employee_name }}</span></li>\n            <li><strong>Reason for Rejection:</strong> {{ $('Webhook').item.json.body.reject_reason }}</li>\n        </ul>\n    </div>\n\n    <p>If you have any questions regarding this decision, please reach out to your direct manager or the HR department for clarification.</p>\n    \n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -736,
+        2496
+      ],
+      "id": "2c93872a-fcae-4ae5-96f8-0a270847127f",
+      "name": "Confirmation Email of receipt2",
+      "webhookId": "3f2ff757-915a-4070-b6f2-dd90c2e4e09b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $('Webhook').item.json.body.approver_id }}"
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        2496
+      ],
+      "id": "9050e5ef-8237-4bbe-9bf0-5c888020694d",
+      "name": "Get a document3",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Request Rejected</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #dc3545; /* Red color for rejection */\n        }\n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Request Rejected</h1>\n        <p>Thank you. Your decision has been recorded successfully.</p>\n        <p>The status for this request has been updated to \"Rejected.\"</p>\n        <div class=\"record-info\">\n            <p>You may now safely close this window.</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -512,
+        2496
+      ],
+      "id": "89593e62-2b2c-4a06-a69e-d0c962d6cbcf",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('If employee is found').item.json.reports_to }}",
+                    "rightValue": "HR-EMP-00001",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3522d9e9-9fd0-45cf-9d72-1fd2a1c679fd"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "if reporting to RJ"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9729f3d2-5d2e-489e-ba96-26185abd8c70",
+                    "leftValue": "={{ $('If employee is found').item.json.designation }}",
+                    "rightValue": "Project Coordinator",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "if Project Coordinator"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c998b74e-97ba-4165-8a39-6a3ad16dafa7",
+                    "leftValue": "={{ $('If employee is found').item.json.designation }}",
+                    "rightValue": "=Lead Generation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "if lead generation"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        608,
+        -224
+      ],
+      "id": "8320596a-df37-4e94-9bc2-e305b2358bc3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"designation\", \"like\", \"%Lead Project Coordinator%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -240
+      ],
+      "id": "bfc6b425-2b76-48f8-a141-1e0cd754dbb5",
+      "name": "Get Project Manager information",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        -240
+      ],
+      "id": "e5d60910-4177-4c01-9a72-e29c934f2b26",
+      "name": "extract pm information"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Loop Over Items1').item.json[\"Email Address\"] }}",
+        "subject": "=Confirmation: Your Undertime Request Has Been Received",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n    <p>Hi {{ $('If employee is found').item.json.employee_name }},</p>\n\n<p>This is to confirm that we have successfully received and filed your request for undertime. Your request is now pending approval.</p>\n\n    <div class=\"details\">\n        <strong>Request Summary</strong>\n        <p>Please review the details of your request below:</p>\n        <ul>\n            <li><strong>Date of Undertime:</strong> {{ $('Loop Over Items1').item.json[\"Date Affected\"] }}</li>\n            <li><strong>Number of hours: {{ $('Loop Over Items1').item.json[\"Number of hours\"] }}</strong> \n            <li><strong>Reason:</strong> {{ $('Loop Over Items1').item.json[\"Reason for Overtime / Undertime\"] }}</li>\n        </ul>\n    </div>\n\n    <p>No further action is required from you at this time. We will send another email once your request has been reviewed by your supervisor.</p>\n    \n    <p>If any of these details are incorrect or you wish to withdraw your request, please contact our <strong>HR / Administrative Aide</strong> for assistance.</p>\n    \n    <p>Best regards,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        288
+      ],
+      "id": "d083493b-1d17-45eb-aa9b-d67ea449477c",
+      "name": "Confirmation Email of receipt for undertime",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=timeoff@rooche.digital",
+        "subject": "=FYI: Undertime Request Filed by {{ $('If employee is found').item.json.employee_name }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n    <p>Hello Admin,</p>\n    <p>This is a notification that an employee has filed a request for undertime. This is for your records only.</p>\n\n    <div class=\"details\">\n        <strong>Undertime Request Details</strong>\n        <ul>\n            <li><strong>Employee Name:</strong> {{ $('If employee is found').item.json.employee_name }}</li>\n            <li><strong>Date of Undertime:</strong> {{ $('Loop Over Items1').item.json[\"Date Affected\"] }}</li>\n            <li><strong>Number of Hours:</strong> {{ $('Loop Over Items1').item.json[\"Number of hours\"] }}</li>\n            <li><strong>Reason:</strong> {{ $('Loop Over Items1').item.json[\"Reason for Overtime / Undertime\"] }}</li>\n            <li><strong>Date Filed:</strong> {{ $now.setZone('Asia/Manila').toFormat(\"MMMM d, yyyy 'at' h:mm a\") }}</li>\n        </ul>\n    </div>\n\n    <p>No action is required at this time.</p>\n    \n    <p>Thank you,</p>\n    <p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        288
+      ],
+      "id": "b26a6025-5dc4-4db5-b8e5-c3e7aa42c79c",
+      "name": "Send an email about duplicate UT entry",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"employee\", \"like\", \"%{{ $('If employee is found').item.json.reports_to }}%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        -48
+      ],
+      "id": "7520d8c2-a57d-4566-a90e-775e7bf35e91",
+      "name": "Get Reports to information",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        -48
+      ],
+      "id": "7c51e08b-8f24-471e-a54d-e36dcf2c6643",
+      "name": "extract lg information"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1ede50e-0586-4f16-9b69-13af97d003be",
+              "leftValue": "={{ $json.designation }}",
+              "rightValue": "Representative",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -736,
+        144
+      ],
+      "id": "e5be0d48-3261-4009-b820-331adb96d7a2",
+      "name": "If role is not representative"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.employee_name }}",
+        "subject": "Action Required for Your Overtime Request",
+        "message": "=<!DOCTYPE html>\n\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\nbody {\nfont-family: Arial, sans-serif;\nline-height: 1.6;\ncolor: #333;\n}\n.container {\npadding: 20px;\nmax-width: 600px;\nmargin: auto;\n}\n.details {\nbackground-color: #f4f4f4;\npadding: 15px;\nborder-radius: 5px;\nmargin: 20px 0;\n}\nul {\nlist-style-type: none;\npadding: 0;\n}\nli {\nmargin-bottom: 5px;\n}\n</style>\n</head>\n<body>\n<div class=\"container\">\n<p>Hi {{ $json.employee_name }},</p>\n\n<p>Thank you for submitting an overtime request. This email serves as an acknowledgement that we have received your submission.</p>\n\n<p>Based on company policy for your specific designation, you are required to include any overtime hours directly on your next invoice for payment, rather than filing through this automated system.</p>\n\n<div class=\"details\">\n    <strong>Notice: Overtime Request Not Recorded</strong>\n    <p>Please be advised that this overtime request has <strong>not</strong> been processed or recorded. To ensure you are compensated for these hours, you must add them to your invoice.</p>\n</div>\n\n<p>If you have any questions regarding this policy, please reach out to your direct supervisor or the HR department.</p>\n\n<p>Thanks,</p>\n<p><em>Rooche Digital Automations</em></p>\n</div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -512,
+        384
+      ],
+      "id": "413fc793-db4c-43eb-b540-02d07baaea9f",
+      "name": "We do not enabled systems for Representatives at the moment",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.company_email }}",
+        "subject": "=Overtime Request Pending Your Approval",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\n    body {\n        font-family: Arial, sans-serif;\n        line-height: 1.6;\n        color: #333;\n    }\n    .container {\n        padding: 20px;\n        max-width: 600px;\n        margin: auto;\n    }\n    .button {\n        display: inline-block;\n        padding: 10px 20px;\n        margin: 10px 5px 10px 0;\n        border-radius: 5px;\n        text-decoration: none;\n        color: #fff !important;\n        font-weight: bold;\n    }\n    .approve {\n        background-color: #28a745;\n    }\n    .reject {\n        background-color: #dc3545;\n    }\n    .details {\n        background-color: #f4f4f4;\n        padding: 15px;\n        border-radius: 5px;\n        margin: 20px 0;\n    }\n    .edit-link {\n        font-size: 0.9em;\n        color: #555;\n    }\n</style>\n</head>\n<body>\n    <div class=\"container\">\n        <p>Hi {{ $json.first_name }} {{ $json.last_name }},</p>\n        <p>An overtime request has been submitted and requires your approval. Please review the details below and take action.</p>\n\n        <div class=\"details\">\n            <strong>Overtime Request Details:</strong>\n            <ul>\n                <li><strong>Employee:</strong> {{ $('Find the employee who filled out the form').item.json.employee_name }}</li>\n                <li><strong>Date of Overtime:</strong> {{ $('Loop Over Items1').item.json[\"Date Affected\"] }}</li>\n                <li><strong>Hours Requested:</strong> {{ $('Loop Over Items1').item.json[\"Number of hours\"] }}</li>\n                <li><strong>Reason:</strong> {{ $('Loop Over Items1').item.json[\"Reason for Overtime / Undertime\"] }}</li>\n                <li><strong>Affected Project/s:</strong> {{ $('Loop Over Items1').item.json[\"Project/Task Associated\"] }}</li>\n            </ul>\n        </div>\n\n        <p>Please click one of the buttons below to approve or reject this request.</p>\n        \n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=1&approver_id={{ $json.employee }}&id={{ $('Cache the record').item.json.id }}\" class=\"button approve\">Approve Request</a>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=0&approver_id={{ $json.employee }}&id={{ $('Cache the record').item.json.id }}\" class=\"button reject\">Reject Request</a>\n\n        <p>Thanks,</p>\n        <p><em>Rooche Digital Automations</em></p>\n    </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1280,
+        608
+      ],
+      "id": "68eacfab-a6a0-41f7-a4e1-fd479ccab82e",
+      "name": "Send an OT confirmation to approvers1",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2304,
+        1280
+      ],
+      "id": "5270dddd-8871-40a9-a162-1634cd42b4cb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Overtime-Requests",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "approved_by",
+              "condition": "is",
+              "keyValue": "=null"
+            },
+            {
+              "keyName": "reject_reason",
+              "condition": "is",
+              "keyValue": "null"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1632,
+        1280
+      ],
+      "id": "b028bcdc-c7e8-4aeb-ab89-cd0e6945481d",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "pVltU0se0L6uweCK",
+          "name": "Supabase account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Company%20Program?&fields=[\"name\",\"program_manager\"]&filters=[[\"name\", \"=\", \"\nOvertime System\"], [\"status\", \"=\", \"Active\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2080,
+        1280
+      ],
+      "id": "97ff6c56-c331-4bb6-b5a1-9ef637886d80",
+      "name": "Get Overtime System if enabled1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3075aa73-6f5a-43d3-949b-73b393e3d0f0",
+              "leftValue": "={{ $json.data[0].name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1856,
+        1280
+      ],
+      "id": "133c1827-fa1e-434e-bd7a-0bc56e349b09",
+      "name": "if Overtime System Incentive is turned on1"
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "append",
+              "field": "frappe_employee_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        -1408,
+        1216
+      ],
+      "id": "b07acd4e-6432-4791-ac58-aa07beb1ed1f",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"reports_to\", \"designation\",\"first_name\", \"last_name\",\"employee\"]&filters=[[\"name\", \"in\", {{ JSON.stringify($json.appended_frappe_employee_id) }}], [\"status\", \"=\", \"Active\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1184,
+        1216
+      ],
+      "id": "bd7788ae-1e66-43d0-9453-bf7591f64bc0",
+      "name": "Get Overtime System if enabled2",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "employee",
+              "field2": "frappe_employee_id"
+            }
+          ]
+        },
+        "joinMode": "enrichInput2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -736,
+        1280
+      ],
+      "id": "63f872b6-0103-4eea-948b-7b207942da94",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        1216
+      ],
+      "id": "df9130cf-bb02-4722-8eb4-bebe65b07131",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dd54c788-6c82-451f-9df0-f3f2c044cea0",
+              "leftValue": "={{ $json.reports_to }}",
+              "rightValue": "=HR-EMP-00001",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        992
+      ],
+      "id": "e858cd89-eeba-4bd1-a54c-1bc738495260",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f96b6507-b04a-4e65-8d19-1f0236b6169e",
+              "leftValue": "={{ $json.designation }}",
+              "rightValue": "Project Coordinator",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        1376
+      ],
+      "id": "5856db97-f7f3-47e2-96d9-bcdb43e0b982",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cd29b16d-b47d-4703-addb-1ac04765f1ff",
+              "leftValue": "={{ $json.designation }}",
+              "rightValue": "Lead Generation",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        1568
+      ],
+      "id": "182a61cd-f365-43f2-9704-65331eec37f4",
+      "name": "Filter2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "795dbd7e-4c58-4201-a451-957fc12bac62",
+              "leftValue": "={{ $json.reports_to }}",
+              "rightValue": "HR-EMP-00001",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "783674b3-aad5-4fac-a773-40d544154148",
+              "leftValue": "={{ $json.designation }}",
+              "rightValue": "=Lead Generation",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "ec1dcbc9-4dd6-412a-8eb8-5dde02c8f85b",
+              "leftValue": "={{ $json.designation }}",
+              "rightValue": "Project Coordinator",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        1184
+      ],
+      "id": "9ebb2d48-3477-49f4-b1d5-76efaa47c0fe",
+      "name": "Filter3"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.data[0].company_email }}",
+        "subject": "=[Daily] Overtime Request Pending Your Approval",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\n  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n  .container { padding: 20px; max-width: 600px; margin: auto; }\n  .button { display: inline-block; padding: 8px 15px; margin: 10px 5px 10px 0; border-radius: 5px; text-decoration: none; color: #fff !important; font-weight: bold; }\n  .approve { background-color: #28a745; }\n  .reject { background-color: #dc3545; }\n  .request-item { background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; }\n  h3 { margin-top: 0; }\n</style>\n</head>\n<body>\n  <div class=\"container\">\n    <p>Hi {{ $json.data[0].first_name }} {{ $json.data[0].last_name }},</p>\n    <p>Here is your daily summary of pending overtime requests that require your action. Please review each request below.</p>\n\n    {{ $items('Aggregate')[0].json.data.map(item => `\n      <div class=\"request-item\">\n        <h3>Request from: ${item.first_name} ${item.last_name}</h3>\n        <ul>\n          <li><strong>Date of Overtime:</strong> ${item.payroll_date}</li>\n          <li><strong>Hours Requested:</strong> ${item.hours}</li>\n          <li><strong>Reason:</strong> ${item.reason}</li>\n          <li><strong>Affected Project/s:</strong> ${item.projects_affected}</li>\n        </ul>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=1&approver_id=${item.reports_to}&id=${item.id}\" class=\"button approve\">Approve</a>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=0&approver_id=${item.reports_to}&id=${item.id}\" class=\"button reject\">Reject</a>\n      </div>\n    `).join('') }}\n\n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        992
+      ],
+      "id": "c9c266f6-1aa8-45f9-93e4-878fda8fe7a8",
+      "name": "Send an OT confirmation to approvers2",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        992
+      ],
+      "id": "4cddcb42-b3f5-43b3-ad62-6471d83a9706",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"designation\", \"like\", \"%Human Resources%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        992
+      ],
+      "id": "6d19719d-97ca-4fd1-95d0-a831fa819ec3",
+      "name": "Get HR Employee information1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        1184
+      ],
+      "id": "09e2b045-24cc-4522-aa39-288a46734c09",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"designation\", \"like\", \"%Project Coordinator%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        1184
+      ],
+      "id": "67c140a3-7e84-42a5-bbd7-5bbccafa63cd",
+      "name": "Get Project Coordinators information1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "company_email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        1184
+      ],
+      "id": "ffdac5ac-cb4a-4e4e-b16c-f2ddde99733f",
+      "name": "Summarize1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1184
+      ],
+      "id": "4d4e9745-7b6c-4917-a870-50b0e5eb310b",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.concatenated_company_email }}",
+        "subject": "=[Daily] Overtime Request Pending Your Approval",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\n  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n  .container { padding: 20px; max-width: 600px; margin: auto; }\n  .button { display: inline-block; padding: 8px 15px; margin: 10px 5px 10px 0; border-radius: 5px; text-decoration: none; color: #fff !important; font-weight: bold; }\n  .approve { background-color: #28a745; }\n  .reject { background-color: #dc3545; }\n  .request-item { background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; }\n  h3 { margin-top: 0; }\n</style>\n</head>\n<body>\n  <div class=\"container\">\n    <p>Hi Project Coordinators!</p>\n    <p>Here is your daily summary of pending overtime requests that require your action. Please review each request below.</p>\n\n    {{ $items('Aggregate1')[0].json.data.map(item => `\n      <div class=\"request-item\">\n        <h3>Request from: ${item.first_name} ${item.last_name}</h3>\n        <ul>\n          <li><strong>Date of Overtime:</strong> ${item.payroll_date}</li>\n          <li><strong>Hours Requested:</strong> ${item.hours}</li>\n          <li><strong>Reason:</strong> ${item.reason}</li>\n          <li><strong>Affected Project/s:</strong> ${item.projects_affected}</li>\n        </ul>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=1&approver_id=${item.reports_to}&id=${item.id}\" class=\"button approve\">Approve</a>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=0&approver_id=${item.reports_to}&id=${item.id}\" class=\"button reject\">Reject</a>\n      </div>\n    `).join('') }}\n\n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        608,
+        1184
+      ],
+      "id": "7ab6a551-df7a-478f-8860-5c425267f6bc",
+      "name": "Send an OT confirmation to approvers3",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.data[0].company_email }}",
+        "subject": "=[Daily] Overtime Request Pending Your Approval",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\n  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n  .container { padding: 20px; max-width: 600px; margin: auto; }\n  .button { display: inline-block; padding: 8px 15px; margin: 10px 5px 10px 0; border-radius: 5px; text-decoration: none; color: #fff !important; font-weight: bold; }\n  .approve { background-color: #28a745; }\n  .reject { background-color: #dc3545; }\n  .request-item { background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; }\n  h3 { margin-top: 0; }\n</style>\n</head>\n<body>\n  <div class=\"container\">\n    <p>Hi {{ $json.data[0].first_name }} {{ $json.data[0].last_name }},</p>\n    <p>Here is your daily summary of pending overtime requests that require your action. Please review each request below.</p>\n\n    {{ $items('Aggregate2')[0].json.data.map(item => `\n      <div class=\"request-item\">\n        <h3>Request from: ${item.first_name} ${item.last_name}</h3>\n        <ul>\n          <li><strong>Date of Overtime:</strong> ${item.payroll_date}</li>\n          <li><strong>Hours Requested:</strong> ${item.hours}</li>\n          <li><strong>Reason:</strong> ${item.reason}</li>\n          <li><strong>Affected Project/s:</strong> ${item.projects_affected}</li>\n        </ul>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=1&approver_id=${item.reports_to}&id=${item.id}\" class=\"button approve\">Approve</a>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=0&approver_id=${item.reports_to}&id=${item.id}\" class=\"button reject\">Reject</a>\n      </div>\n    `).join('') }}\n\n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        1376
+      ],
+      "id": "c64c890b-78b8-44e6-bf17-14e5c645bb15",
+      "name": "Send an OT confirmation to approvers4",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        1376
+      ],
+      "id": "fe85c13f-aa0f-4ada-962f-829a9b1729be",
+      "name": "Aggregate2"
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"designation\", \"like\", \"%Lead Project Coordinator%\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        1376
+      ],
+      "id": "17e9c7a2-58d5-42d9-878e-487b7f654954",
+      "name": "Get HR Employee information2",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Employee?&fields=[\"employee\", \"first_name\", \"last_name\", \"company_email\"]&filters=[[\"status\", \"=\", \"Active\"], [\"employee\", \"=\", \"{{ $json.data[0].reports_to }}\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        1568
+      ],
+      "id": "b5465d72-de7d-415e-926b-2b9b76073e8e",
+      "name": "Get Reports to information1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        1568
+      ],
+      "id": "a38060d5-7af7-43f4-b081-7ae105fe973b",
+      "name": "Aggregate3"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.data[0].company_email }}",
+        "subject": "=[Daily] Overtime Request Pending Your Approval",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<style>\n  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n  .container { padding: 20px; max-width: 600px; margin: auto; }\n  .button { display: inline-block; padding: 8px 15px; margin: 10px 5px 10px 0; border-radius: 5px; text-decoration: none; color: #fff !important; font-weight: bold; }\n  .approve { background-color: #28a745; }\n  .reject { background-color: #dc3545; }\n  .request-item { background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; }\n  h3 { margin-top: 0; }\n</style>\n</head>\n<body>\n  <div class=\"container\">\n    <p>Hi {{ $json.data[0].first_name }} {{ $json.data[0].last_name }},</p>\n    <p>Here is your daily summary of pending overtime requests that require your action. Please review each request below.</p>\n\n    {{ $items('Aggregate3')[0].json.data.map(item => `\n      <div class=\"request-item\">\n        <h3>Request from: ${item.first_name} ${item.last_name}</h3>\n        <ul>\n          <li><strong>Date of Overtime:</strong> ${item.payroll_date}</li>\n          <li><strong>Hours Requested:</strong> ${item.hours}</li>\n          <li><strong>Reason:</strong> ${item.reason}</li>\n          <li><strong>Affected Project/s:</strong> ${item.projects_affected}</li>\n        </ul>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=1&approver_id=${item.reports_to}&id=${item.id}\" class=\"button approve\">Approve</a>\n        <a href=\"https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999?action=0&approver_id=${item.reports_to}&id=${item.id}\" class=\"button reject\">Reject</a>\n      </div>\n    `).join('') }}\n\n    <p>Thanks,</p>\n    <p><em>Rooche Digital Automations</em></p>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        1568
+      ],
+      "id": "b37ddfca-f262-40d2-8928-21248aaa15d1",
+      "name": "Send an OT confirmation to approvers5",
+      "webhookId": "fde79f1f-16b0-4d6d-8667-743f7f996232",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "docType": "Additional%20Salary",
+        "properties": {
+          "customProperty": [
+            {
+              "field": "employee",
+              "value": "={{ $json.frappe_employee_id }}"
+            },
+            {
+              "field": "payroll_date",
+              "value": "={{ $json.payroll_date }}"
+            },
+            {
+              "field": "salary_component",
+              "value": "Overtime"
+            },
+            {
+              "field": "=custom_number_of_hours",
+              "value": "={{ $json.hours }}"
+            },
+            {
+              "field": "=docstatus",
+              "value": "1"
+            },
+            {
+              "field": "=custom_notes",
+              "value": "={{ $json.reason }} - {{ $json.projects_affected }} Approved by: {{ $json.approved_by }}"
+            },
+            {
+              "field": "amount",
+              "value": "={{ parseFloat(0) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        1792
+      ],
+      "id": "119a7848-fb41-4fe6-b944-183b5a5fa828",
+      "name": "Create a document1",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Access Denied</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            background-color: #f4f4f4;\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            margin: 0;\n        }\n        .container {\n            text-align: center;\n            padding: 40px;\n            background-color: #fff;\n            border-radius: 8px;\n            box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n        }\n        h1 {\n            color: #dc3545; /* Red color for error */\n        }\n        \n        /* Added icon */\n        h1::before {\n            content: '🛑';\n            display: block;\n            font-size: 3rem;\n            margin-bottom: 10px;\n        }\n        \n        p {\n            font-size: 1.1em;\n        }\n        .record-info {\n            font-size: 0.9em;\n            color: #777;\n            margin-top: 20px;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Access Denied</h1>\n        <p>You do not have permission to perform this action.</p>\n        <p>This may be because you are not logged in, or your account does not have the required privileges.</p>\n        <div class=\"record-info\">\n            <p>Please contact your system administrator if you believe this is an error. You can now close this window.</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1856,
+        2272
+      ],
+      "id": "de1b42ae-bf4a-4211-95cd-e8088a422c76",
+      "name": "Respond with invalid transaction ID2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "19525882-fd0a-47cb-946d-98226ff11311",
+              "leftValue": "={{ $json.query.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2080,
+        2176
+      ],
+      "id": "8b66ece2-7747-403d-8235-1d78aac90303",
+      "name": "If id exists"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1408,
+        768
+      ],
+      "id": "d1bf34be-61f7-46e5-8b09-759c83d9137e",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5849f555-925e-418b-adfb-4e5e4af3e722",
+              "name": "Email Address",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json[\"Email Address\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "9fa9c55c-3f4b-4f90-9464-953b644b135d",
+              "name": "Timestamp",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json.Timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "8e7140b6-f928-4a94-99ea-d0d4f77a32e3",
+              "name": "Date Affected",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json[\"Date Affected\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "7d9b7e56-dbe5-4800-8e18-e2d1cc924527",
+              "name": "Number of hours",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json[\"Number of hours\"] }}",
+              "type": "number"
+            },
+            {
+              "id": "665fc86f-c3df-47d1-952b-f86933f07c65",
+              "name": "Reason for Overtime / Undertime",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json[\"Reason for Overtime / Undertime\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "9b834274-b595-4483-8253-87bf18180b90",
+              "name": "Minutes",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json.Minutes }}",
+              "type": "number"
+            },
+            {
+              "id": "4999f390-fca9-4a1a-8471-809615181e8f",
+              "name": "Type of request",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json[\"Type of request\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "154cb7e7-006e-45df-8d8b-992adcfbe9aa",
+              "name": "Project/Task Associated",
+              "value": "={{ $('Google Sheets Overtime Trigger').item.json[\"Project/Task Associated\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1632,
+        768
+      ],
+      "id": "741e5011-ab64-4b6a-a345-75658e02c0dd",
+      "name": "Refresh Request Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a7b66b40-fb42-4be3-9699-dc5809f1fa92",
+              "leftValue": "={{ $('Loop Over Items1').item.json[\"Type of request\"] }}",
+              "rightValue": "Overtime",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        48
+      ],
+      "id": "413d998f-dd2a-44b9-8678-15e6e4ca8cf9",
+      "name": "If type of request is Overtime"
+    },
+    {
+      "parameters": {
+        "docType": "Additional%20Salary",
+        "properties": {
+          "customProperty": [
+            {
+              "field": "employee",
+              "value": "={{ $('If employee is found').item.json.employee }}"
+            },
+            {
+              "field": "payroll_date",
+              "value": "={{ DateTime.fromFormat($('Loop Over Items1').item.json[\"Date Affected\"], 'MM/dd/yyyy').toFormat('yyyy-MM-dd') }}"
+            },
+            {
+              "field": "salary_component",
+              "value": "Undertime"
+            },
+            {
+              "field": "=custom_number_of_hours",
+              "value": "={{ $('Loop Over Items1').item.json[\"Number of hours\"] }}"
+            },
+            {
+              "field": "=docstatus",
+              "value": "1"
+            },
+            {
+              "field": "=custom_notes",
+              "value": "={{ $('Loop Over Items1').item.json[\"Reason for Overtime / Undertime\"] }} - {{ $('Loop Over Items1').item.json[\"Project/Task Associated\"] }} "
+            },
+            {
+              "field": "amount",
+              "value": "={{ parseFloat(0) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        288
+      ],
+      "id": "cfe16398-cf50-46f8-81b9-2b99389101b7",
+      "name": "Create an Undertime Transaction",
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6b00bd37-781b-423c-8dbe-aa2eda52fa1a",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -96
+      ],
+      "id": "9dde5f89-73ce-4b12-8bef-2baa3ddb4f3c",
+      "name": "If the Additional Salary log does not exist yet"
+    }
+  ],
+  "connections": {
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an OT confirmation to approvers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Overtime Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Overtime System if enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Overtime System if enabled": {
+      "main": [
+        [
+          {
+            "node": "if Overtime System Incentive is turned on",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if Overtime System Incentive is turned on": {
+      "main": [
+        [
+          {
+            "node": "Refresh Request Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find the employee who filled out the form": {
+      "main": [
+        [
+          {
+            "node": "If employee is found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If employee is found": {
+      "main": [
+        [
+          {
+            "node": "If role is not representative",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an unauthorized email message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an unauthorized email message": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Additional Salary of that date has been filled already": {
+      "main": [
+        [
+          {
+            "node": "If the Additional Salary log does not exist yet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmation Email of receipt": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HR Employee information": {
+      "main": [
+        [
+          {
+            "node": "extract hr information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Coordinators information": {
+      "main": [
+        [
+          {
+            "node": "extract pc information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract hr information": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract pc information": {
+      "main": [
+        [
+          {
+            "node": "Send an OT confirmation to approvers1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an OT confirmation to approvers": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cache the record": {
+      "main": [
+        [
+          {
+            "node": "Confirmation Email of receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approve or Reject or Reject with reason": {
+      "main": [
+        [
+          {
+            "node": "If id exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Create a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document": {
+      "main": [
+        [
+          {
+            "node": "Confirmation Email of receipt1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmation Email of receipt1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document1": {
+      "main": [
+        [
+          {
+            "node": "Get a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the OT transaction ID exists": {
+      "main": [
+        [
+          {
+            "node": "If the transaction has not been approved yet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with invalid transaction ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the transaction has not been approved yet": {
+      "main": [
+        [
+          {
+            "node": "If action is approve",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get approver details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If action is approve": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond and ask the reason it is rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get OT transaction details": {
+      "main": [
+        [
+          {
+            "node": "If the OT transaction ID exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get approver details": {
+      "main": [
+        [
+          {
+            "node": "Respond that the request has been approved by someone else",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get OT transaction details1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get OT transaction details1": {
+      "main": [
+        [
+          {
+            "node": "If the OT transaction ID exists1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the OT transaction ID exists1": {
+      "main": [
+        [
+          {
+            "node": "If the transaction has not been approved yet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with invalid transaction ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the transaction has not been approved yet1": {
+      "main": [
+        [
+          {
+            "node": "Update a row1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get approver details1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get approver details1": {
+      "main": [
+        [
+          {
+            "node": "Respond that the request has been approved by someone else1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row1": {
+      "main": [
+        [
+          {
+            "node": "Get a document3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document2": {
+      "main": [
+        [
+          {
+            "node": "Confirmation Email of receipt2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmation Email of receipt2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document3": {
+      "main": [
+        [
+          {
+            "node": "Get a document2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get HR Employee information",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Project Manager information",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Reports to information",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Project Coordinators information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Manager information": {
+      "main": [
+        [
+          {
+            "node": "extract pm information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract pm information": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmation Email of receipt for undertime": {
+      "main": [
+        [
+          {
+            "node": "Send an email about duplicate UT entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an email about duplicate UT entry": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reports to information": {
+      "main": [
+        [
+          {
+            "node": "extract lg information",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract lg information": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If role is not representative": {
+      "main": [
+        [
+          {
+            "node": "If type of request is Overtime",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "We do not enabled systems for Representatives at the moment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "We do not enabled systems for Representatives at the moment": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an OT confirmation to approvers1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Overtime System if enabled1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Overtime System if enabled1": {
+      "main": [
+        [
+          {
+            "node": "if Overtime System Incentive is turned on1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if Overtime System Incentive is turned on1": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Get Overtime System if enabled2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Overtime System if enabled2": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Get HR Employee information1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HR Employee information1": {
+      "main": [
+        [
+          {
+            "node": "Send an OT confirmation to approvers2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Get Project Coordinators information1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Coordinators information1": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize1": {
+      "main": [
+        [
+          {
+            "node": "Send an OT confirmation to approvers3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Summarize1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate2": {
+      "main": [
+        [
+          {
+            "node": "Get HR Employee information2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HR Employee information2": {
+      "main": [
+        [
+          {
+            "node": "Send an OT confirmation to approvers4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reports to information1": {
+      "main": [
+        [
+          {
+            "node": "Send an OT confirmation to approvers5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate3": {
+      "main": [
+        [
+          {
+            "node": "Get Reports to information1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document1": {
+      "main": [
+        [
+          {
+            "node": "Get a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If id exists": {
+      "main": [
+        [
+          {
+            "node": "Get OT transaction details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with invalid transaction ID2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Find the employee who filled out the form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Request Fields": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If type of request is Overtime": {
+      "main": [
+        [
+          {
+            "node": "Check if Additional Salary of that date has been filled already",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an Undertime Transaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an Undertime Transaction": {
+      "main": [
+        [
+          {
+            "node": "Confirmation Email of receipt for undertime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the Additional Salary log does not exist yet": {
+      "main": [
+        [
+          {
+            "node": "Cache the record",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an email about duplicate OT entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Google Sheets Overtime Trigger": [
+      {
+        "Timestamp": "10/18/2025 6:52:42",
+        "Email Address": "hello@rooche.net",
+        "Date Affected": "10/17/2025",
+        "Number of hours": 8,
+        "Reason for Overtime / Undertime": "Finish All Task on Jira",
+        "Project/Task Associated": "proj-vacationme",
+        "Minutes": 45,
+        "Type of request": "Overtime"
+      },
+      {
+        "Timestamp": "10/18/2025 6:53:08",
+        "Email Address": "rjcristy@gmail.com",
+        "Date Affected": "10/18/2025",
+        "Number of hours": 3,
+        "Reason for Overtime / Undertime": "Finish All Task on Jira",
+        "Project/Task Associated": "proj-vacationme",
+        "Minutes": "",
+        "Type of request": "Overtime"
+      }
+    ],
+    "Approve or Reject or Reject with reason": [
+      {
+        "headers": {
+          "host": "n8n.roochedigital.com",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "en-US,en;q=0.9",
+          "priority": "u=0, i",
+          "sec-ch-ua": "\"Chromium\";v=\"141\", \"Not:A-Brand\";v=\"8\", \"Google Chrome\";v=\"141\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "none",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          "via": "2.0 Caddy",
+          "x-forwarded-for": "14.102.171.5",
+          "x-forwarded-host": "n8n.roochedigital.com",
+          "x-forwarded-proto": "https"
+        },
+        "params": {},
+        "query": {},
+        "body": {},
+        "webhookUrl": "https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999",
+        "executionMode": "production"
+      }
+    ],
+    "Webhook": [
+      {
+        "headers": {
+          "host": "n8n.roochedigital.com",
+          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+          "content-length": "62",
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "en-US,en;q=0.9",
+          "cache-control": "max-age=0",
+          "content-type": "application/x-www-form-urlencoded",
+          "origin": "null",
+          "priority": "u=0, i",
+          "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Google Chrome\";v=\"139\", \"Chromium\";v=\"139\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"macOS\"",
+          "sec-fetch-dest": "iframe",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "cross-site",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1",
+          "via": "2.0 Caddy",
+          "x-forwarded-for": "131.226.102.85",
+          "x-forwarded-host": "n8n.roochedigital.com",
+          "x-forwarded-proto": "https"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "reject_reason": "casdasdsa",
+          "action": "0",
+          "approver_id": "HR-EMP-00164",
+          "id": "4"
+        },
+        "webhookUrl": "https://n8n.roochedigital.com/webhook/5a661dcd-b7dc-421a-a6cf-252729c4e999",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "33325513eb860da8efda6c55ed4c66273261e6cd3bc946809f06fcd754555539"
+  }
+}

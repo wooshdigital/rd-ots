@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Rooche Digital Brand Colors - Light Mode */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 356 99% 46%; /* #EC002D - Rooche primary red */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 357 97% 55%; /* #FB1A38 - Rooche secondary red */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 356 99% 46%; /* #EC002D - Red accent */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 71% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 100% 41%;
+    --success-foreground: 0 0% 100%;
+    --warning: 25 100% 50%;
+    --warning-foreground: 0 0% 100%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 356 99% 46%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Rooche Digital Brand Colors - Dark Mode */
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 14%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 356 99% 46%; /* #EC002D - Rooche primary red */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 357 97% 55%; /* #FB1A38 - Rooche secondary red */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 357 97% 55%; /* #FB1A38 - Red accent */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 71% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 100% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 25 100% 55%;
+    --warning-foreground: 0 0% 100%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 356 99% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

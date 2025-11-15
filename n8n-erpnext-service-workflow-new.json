@@ -1,0 +1,720 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "validate_employee",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "validate_employee"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "create_additional_salary",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create_additional_salary"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "check_system_enabled",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "check_system_enabled"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "get_employee_details",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "get_employee_details"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "check_duplicate_salary",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "check_duplicate_salary"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "get_approver",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "get_approver"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "get_hr_staff",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "get_hr_staff"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.operation }}",
+                    "rightValue": "get_approvers_by_designation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "get_approvers_by_designation"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "7cd7a3f4-4db7-4449-b2da-7efea8824a3b",
+      "name": "Route Operation",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        4128,
+        4720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "docType": "Employee",
+        "limit": 1,
+        "options": {
+          "fields": [
+            "employee_name",
+            "employee",
+            "reports_to",
+            "designation"
+          ],
+          "filters": {
+            "customProperty": [
+              {
+                "field": "company_email",
+                "value": "={{ $json.body.email }}"
+              },
+              {
+                "field": "status",
+                "value": "Active"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a81d59ca-13d4-4277-b127-ce10e6fefaa6",
+      "name": "Find Employee",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        4352
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "docType": "Additional%20Salary",
+        "properties": {
+          "customProperty": [
+            {
+              "field": "employee",
+              "value": "={{ $json.body.employee_id }}"
+            },
+            {
+              "field": "payroll_date",
+              "value": "={{ $json.body.payroll_date }}"
+            },
+            {
+              "field": "salary_component",
+              "value": "={{ $json.body.salary_component }}"
+            },
+            {
+              "field": "custom_number_of_hours",
+              "value": "={{ $json.body.hours }}"
+            },
+            {
+              "field": "amount",
+              "value": "0"
+            },
+            {
+              "field": "docstatus",
+              "value": "1"
+            },
+            {
+              "field": "custom_notes",
+              "value": "={{ $json.body.notes }}"
+            }
+          ]
+        }
+      },
+      "id": "cb8aca20-ccc7-458a-a4c5-9e2f872100fe",
+      "name": "Create Additional Salary",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        4528
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://roochedigital.frappe.cloud/api/resource/Company%20Program?fields=[\"name\",\"program_manager\"]&filters=[[\"name\", \"=\", \"Overtime System\"], [\"status\", \"=\", \"Active\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "id": "19b2bfc7-b5e1-4fbd-b14f-a23f9af90de7",
+      "name": "Check System Enabled",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4320,
+        4704
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://roochedigital.frappe.cloud/api/resource/Additional%20Salary?fields=[\"employee\"]&filters=[[\"employee\", \"=\", \"{{ $json.body.employee_id }}\"], [\"salary_component\", \"=\", \"{{ $json.body.salary_component }}\"], [\"docstatus\", \"=\", \"1\"], [\"payroll_date\", \"=\", \"{{ $json.body.payroll_date }}\"]]",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "erpNextApi",
+        "options": {}
+      },
+      "id": "c16d4896-e3f8-44bd-a258-4b8da2acf4ef",
+      "name": "Check Duplicate Salary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4320,
+        4976
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "docType": "Employee",
+        "limit": 1,
+        "options": {
+          "fields": [
+            "employee_name",
+            "reports_to"
+          ],
+          "filters": {
+            "customProperty": [
+              {
+                "field": "employee",
+                "value": "={{ $json.body.employee_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "121cc3a7-180f-43c3-bfca-c7bef89bb94e",
+      "name": "Get Approver",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        5120
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "docType": "Employee",
+        "returnAll": true,
+        "options": {
+          "fields": [
+            "company_email",
+            "employee_name",
+            "employee",
+            "designation"
+          ],
+          "filters": {
+            "customProperty": [
+              {
+                "field": "designation",
+                "value": "Human Resources"
+              },
+              {
+                "field": "status",
+                "value": "Active"
+              }
+            ]
+          }
+        }
+      },
+      "id": "4547f1e4-d28d-4093-ab9c-045ccbdb8756",
+      "name": "Get HR Staff",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        5264
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "docType": "Employee",
+        "returnAll": true,
+        "options": {
+          "fields": [
+            "company_email",
+            "employee_name",
+            "employee",
+            "designation"
+          ],
+          "filters": {
+            "customProperty": [
+              {
+                "field": "designation",
+                "value": "={{ $json.body.designation }}"
+              },
+              {
+                "field": "status",
+                "value": "Active"
+              }
+            ]
+          }
+        }
+      },
+      "id": "616ac4f3-2c9d-4d9d-a0f8-6527dce73ccf",
+      "name": "Get Approvers by Designation",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        5408
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "e1828d4f-fb7e-4fc5-956b-3c2ce7ef8110",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        4752,
+        4720
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"error\": \"Invalid operation\" } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "65ee940d-36a6-4ceb-a358-f16ae2ac4d19",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        4336,
+        5552
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erpnext-service",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a28fe40d-11c7-431b-8b1a-1829ded0999a",
+      "name": "Webhook Trigger1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        3920,
+        4720
+      ],
+      "webhookId": "erpnext-service-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "docType": "Employee",
+        "documentName": "={{ $json.body.employee_id }}"
+      },
+      "id": "3153d5e3-9162-4443-9072-9006b4999dc9",
+      "name": "Get Employee Details",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        4848
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "8gEOv9ig27O1vHWU",
+          "name": "ERPNext account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Route Operation": {
+      "main": [
+        [
+          {
+            "node": "Find Employee",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Additional Salary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check System Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Employee Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Duplicate Salary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Approver",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get HR Staff",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Approvers by Designation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Employee": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Additional Salary": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check System Enabled": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Salary": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Approver": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HR Staff": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Approvers by Designation": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Route Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Employee Details": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook Trigger1": [
+      {
+        "headers": {
+          "host": "n8n.roochedigital.com",
+          "user-agent": "curl/8.16.0",
+          "content-length": "29",
+          "accept": "*/*",
+          "content-type": "application/json",
+          "via": "2.0 Caddy",
+          "x-forwarded-for": "119.111.178.18",
+          "x-forwarded-host": "n8n.roochedigital.com",
+          "x-forwarded-proto": "https",
+          "accept-encoding": "gzip"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "operation": "get_hr_staff"
+        },
+        "webhookUrl": "https://n8n.roochedigital.com/webhook/erpnext-service",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "33325513eb860da8efda6c55ed4c66273261e6cd3bc946809f06fcd754555539"
+  }
+}

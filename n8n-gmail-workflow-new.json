@@ -1,0 +1,91 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-notification",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "adb3b144-d83b-4aac-a23b-9281589832aa",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        3792,
+        3024
+      ],
+      "webhookId": "send-notification"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.to }}",
+        "subject": "={{ $json.body.subject }}",
+        "message": "={{ $json.body.message }}",
+        "options": {
+          "bccList": "",
+          "ccList": ""
+        }
+      },
+      "id": "511b79dd-097e-4bc7-887c-c4d75e79ab4e",
+      "name": "Send Email via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        4000,
+        3024
+      ],
+      "webhookId": "650b39f8-3fe4-4998-a092-e8e5147c83ff",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qDvyAmmQzlk5tcJi",
+          "name": "Noreplyplease"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"success\": true,\n  \"message\": \"Notification email sent successfully\",\n  \"recipients\": $('Webhook Trigger').item.json.body.to\n} }}",
+        "options": {}
+      },
+      "id": "35ffc090-743f-464c-8fc5-3c2c6606bf5c",
+      "name": "Response Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        4192,
+        3024
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Email via Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email via Gmail": {
+      "main": [
+        [
+          {
+            "node": "Response Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "33325513eb860da8efda6c55ed4c66273261e6cd3bc946809f06fcd754555539"
+  }
+}

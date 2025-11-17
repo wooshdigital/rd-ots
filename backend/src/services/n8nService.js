@@ -184,7 +184,8 @@ class N8nService {
 
       // Normalize the response to have consistent field names
       const normalizedData = {
-        frappe_employee_id: employeeData.employee || employeeData.frappe_employee_id,
+        employee_id: employeeData.employee || employeeData.frappe_employee_id || employeeData.employee_id,
+        frappe_employee_id: employeeData.employee || employeeData.frappe_employee_id || employeeData.employee_id, // Keep for backwards compatibility
         employee_name: employeeData.employee_name,
         reports_to: employeeData.reports_to,
         designation: employeeData.designation,
@@ -362,13 +363,27 @@ class N8nService {
 
       return response.data;
     } catch (error) {
+      const errorData = error.response?.data;
+      const isInactiveEmployee = errorData?.exc_type === 'InactiveEmployeeStatusError' ||
+                                 errorData?.exception?.includes('InactiveEmployeeStatusError');
+
       logger.error('Error creating Additional Salary', {
         error: error.message,
-        response: error.response?.data
+        employeeId: requestData.frappe_employee_id,
+        isInactiveEmployee,
+        response: errorData
       });
 
+      // Provide more helpful error message for inactive employees
+      if (isInactiveEmployee) {
+        throw new AppError(
+          `Cannot create Additional Salary: Employee ${requestData.frappe_employee_id} is marked as Inactive in ERPNext. Please activate the employee first.`,
+          400
+        );
+      }
+
       throw new AppError(
-        error.response?.data?.message || 'Failed to create Additional Salary in ERPNext',
+        errorData?.message || 'Failed to create Additional Salary in ERPNext',
         error.response?.status || 500
       );
     }

@@ -323,13 +323,16 @@ class RequestController {
       const request = await requestService.approveRequest(id, approvedBy);
 
       // Step 2: Create Additional Salary in ERPNext
+      let erpNextError = null;
       try {
         await n8nService.createAdditionalSalary(request);
         logger.info('Additional Salary created in ERPNext', { requestId: id });
       } catch (erpError) {
+        erpNextError = erpError.message;
         logger.error('Failed to create Additional Salary in ERPNext', {
           error: erpError.message,
-          requestId: id
+          requestId: id,
+          employeeId: request.frappe_employee_id
         });
         // Continue even if ERPNext creation fails - can be done manually
       }
@@ -377,8 +380,14 @@ class RequestController {
 
       res.json({
         success: true,
-        message: 'Request approved successfully. Additional Salary will be created in ERPNext.',
-        data: request
+        message: erpNextError
+          ? `Request approved successfully. Note: ${erpNextError}. The Additional Salary must be created manually in ERPNext.`
+          : 'Request approved successfully. Additional Salary has been created in ERPNext.',
+        data: request,
+        ...(erpNextError && {
+          warning: 'Additional Salary creation failed in ERPNext',
+          erpNextError
+        })
       });
     } catch (error) {
       next(error);

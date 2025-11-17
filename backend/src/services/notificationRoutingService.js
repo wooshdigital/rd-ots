@@ -10,6 +10,8 @@ class NotificationRoutingService {
   /**
    * Get approvers for a given employee based on designation and reports_to hierarchy
    * @param {Object} employeeData - Employee data from ERPNext
+   * @param {string} employeeData.employee_id - Employee's ERPNext ID
+   * @param {string} employeeData.employee_name - Employee's full name
    * @param {string} employeeData.designation - Employee's designation
    * @param {string} employeeData.reports_to - Employee ID of direct supervisor
    * @returns {Promise<Array<string>>} Array of approver email addresses
@@ -17,68 +19,72 @@ class NotificationRoutingService {
   async getApprovers(employeeData) {
     try {
       const approvers = [];
-      const { designation, reports_to } = employeeData;
+      const { designation, reports_to, employee_name, employee_id } = employeeData;
 
       logger.info('Determining approvers for employee', {
+        employee_id,
+        employee_name,
         designation,
         reports_to
       });
 
-      // Special case: If reports to specific HR manager (HR-EMP-00001)
-      if (reports_to === 'HR-EMP-00001') {
-        logger.info('Employee reports to HR-EMP-00001, fetching that manager');
-        const hrManager = await n8nService.getEmployeeDetails(reports_to);
-        if (hrManager?.company_email) {
-          approvers.push(hrManager.company_email);
-        }
-        return approvers;
+      // HR email for owner-related cases – pulled from .env
+      const ownerHrEmail = process.env.OWNER_HR_EMAIL?.trim() || 'hr@rooche.digital';
+
+      // ─────────────────────────────────────────────────────
+      // 1. OWNER CASE – highest priority
+      //    - Employee ID is HR-EMP-00001
+      //    - Name is "Rj Salazar Cristy"
+      //    - Designation contains "owner" (just in case)
+      //    - Anyone reporting directly to HR-EMP-00001 or "Rj Salazar Cristy"
+      // ─────────────────────────────────────────────────────
+      const isOwnerById = employee_id === 'HR-EMP-00001';
+      const isOwnerByName = employee_name === 'Rj Salazar Cristy';
+      const isOwnerDesignation = designation && designation.toLowerCase().includes('owner');
+      const reportsToOwner = reports_to === 'HR-EMP-00001' || reports_to === 'Rj Salazar Cristy';
+
+      if (isOwnerById || isOwnerByName || isOwnerDesignation || reportsToOwner) {
+        logger.info('Owner or direct report of Owner → routing ONLY to hr@rooche.digital', {
+          employee_id,
+          employee_name,
+          designation,
+          reports_to,
+          targetEmail: ownerHrEmail
+        });
+
+        return [ownerHrEmail]; // Early return – bypass all other rules
       }
 
-      // Route based on designation
+      // ─────────────────────────────────────────────────────
+      // 2. Normal routing (unchanged)
+      // ─────────────────────────────────────────────────────
       if (designation?.includes('Project Coordinator')) {
-        logger.info('Employee is Project Coordinator, fetching all Project Coordinators');
-        const projectCoordinators = await this.getApproversByDesignation('Project Coordinator');
-        approvers.push(...projectCoordinators);
+        logger.info('Project Coordinator → notifying all Project Coordinators');
+        const coords = await this.getApproversByDesignation('Project Coordinator');
+        approvers.push(...coords);
       }
       else if (designation?.includes('Lead Generation')) {
-        logger.info('Employee is Lead Generation, fetching Lead Project Coordinators');
-        const leadCoordinators = await this.getApproversByDesignation('Lead Project Coordinator');
-        approvers.push(...leadCoordinators);
+        logger.info('Lead Generation → notifying all Lead Project Coordinators');
+        const leads = await this.getApproversByDesignation('Lead Project Coordinator');
+        approvers.push(...leads);
       }
-      else {
-        // Default: Send to direct supervisor (reports_to)
-        logger.info('Using default routing: direct supervisor from reports_to field');
-        if (reports_to) {
-          const supervisor = await n8nService.getEmployeeDetails(reports_to);
-          if (supervisor?.company_email) {
-            approvers.push(supervisor.company_email);
-            logger.info('Direct supervisor found', {
-              supervisorId: reports_to,
-              email: supervisor.company_email
-            });
-          } else {
-            logger.warn('Direct supervisor has no company_email', { supervisorId: reports_to });
-          }
-        } else {
-          logger.warn('No reports_to field found for employee');
+      else if (reports_to) {
+        // Default: direct supervisor
+        logger.info('Default routing → direct supervisor');
+        const supervisor = await n8nService.getEmployeeDetails(reports_to);
+        if (supervisor?.company_email) {
+          approvers.push(supervisor.company_email);
         }
+      } else {
+        logger.warn('No reports_to and no special designation found');
       }
 
-      // Remove duplicates
       const uniqueApprovers = [...new Set(approvers)];
-
-      logger.info('Approvers determined', {
-        count: uniqueApprovers.length,
-        approvers: uniqueApprovers
-      });
-
+      logger.info('Final approvers', { count: uniqueApprovers.length, approvers: uniqueApprovers });
       return uniqueApprovers;
+
     } catch (error) {
-      logger.error('Error determining approvers', {
-        error: error.message,
-        employeeData
-      });
-      // Don't throw - return empty array to allow other notifications to proceed
+      logger.error('Error in getApprovers', { error: error.message, employeeData });
       return [];
     }
   }

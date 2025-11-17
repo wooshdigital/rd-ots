@@ -63,7 +63,8 @@ export default function Login() {
         {new URLSearchParams(window.location.search).get('error') && (
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p className="text-sm text-red-800 dark:text-red-200 text-center">
-              {getErrorMessage(new URLSearchParams(window.location.search).get('error') || '')}
+              {new URLSearchParams(window.location.search).get('message') ||
+               getErrorMessage(new URLSearchParams(window.location.search).get('error') || '')}
             </p>
           </div>
         )}
@@ -83,6 +84,8 @@ function getErrorMessage(error: string): string {
   switch (error) {
     case 'unauthorized_domain':
       return 'Your email domain is not authorized to access this system.';
+    case 'access_denied':
+      return 'You do not have permission to access this application. Please contact your administrator to request access.';
     case 'auth_failed':
       return 'Authentication failed. Please try again.';
     case 'no_code':

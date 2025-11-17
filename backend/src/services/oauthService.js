@@ -1,5 +1,6 @@
 import { OAuth2Client } from 'google-auth-library';
 import crypto from 'crypto';
+import cetAccessService from './cetAccessService.js';
 
 class OAuthService {
   constructor() {
@@ -60,6 +61,20 @@ class OAuthService {
   checkDomainAccess(email) {
     const domain = email.split('@')[1];
     return this.allowedDomains.includes(domain);
+  }
+
+  /**
+   * Check if user has access via CET
+   */
+  async checkCetAccess(email) {
+    return await cetAccessService.checkUserAccess(email);
+  }
+
+  /**
+   * Get user's CET access information including roles
+   */
+  async getCetUserInfo(email) {
+    return await cetAccessService.getUserAccessInfo(email);
   }
 
   /**

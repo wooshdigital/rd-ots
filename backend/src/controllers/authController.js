@@ -38,6 +38,15 @@ class AuthController {
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=unauthorized_domain`);
       }
 
+      // Check CET access - critical security check
+      const hasCetAccess = await oauthService.checkCetAccess(googleUser.email);
+      if (!hasCetAccess) {
+        console.log(`[CET] Access denied for user: ${googleUser.email}`);
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=access_denied&message=${encodeURIComponent('You do not have permission to access this application. Please contact your administrator to request access.')}`);
+      }
+
+      console.log(`[CET] Access granted for user: ${googleUser.email}`);
+
       // Check if user exists
       const userResult = await pool.query(
         'SELECT * FROM users WHERE email = $1',

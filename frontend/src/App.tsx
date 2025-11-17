@@ -23,12 +23,6 @@ function AppContent() {
                 </Link>
               </div>
               <div className="flex items-center gap-4">
-                <Link
-                  to="/"
-                  className="text-foreground hover:text-secondary px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Submit Request
-                </Link>
                 {(user?.role === 'Owner' || user?.role === 'HR' || user?.role === 'Project Coordinator') && (
                   <Link
                     to="/admin"
@@ -53,7 +47,7 @@ function AppContent() {
             path="/"
             element={
               <ProtectedRoute>
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-4xl mx-auto mt-5">
                   <OvertimeRequestForm />
                 </div>
               </ProtectedRoute>

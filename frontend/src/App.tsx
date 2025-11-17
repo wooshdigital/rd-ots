@@ -46,7 +46,7 @@ function AppContent() {
       )}
 
       {/* Main Content */}
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route

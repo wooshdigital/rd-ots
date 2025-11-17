@@ -337,6 +337,12 @@ class N8nService {
                    `Approved by: ${requestData.approved_by}\n` +
                    `Requested on: ${new Date(requestData.created_at).toLocaleDateString()}`;
 
+      // Convert hours and minutes to decimal hours
+      // Example: 2 hours 30 minutes = 2.5 hours
+      const hours = Math.abs(parseFloat(requestData.hours));
+      const minutes = parseInt(requestData.minutes) || 0;
+      const totalHoursDecimal = hours + (minutes / 60);
+
       const response = await this.axiosInstance.post(
         process.env.N8N_WEBHOOK_ERPNEXT_SERVICE || '/webhook/erpnext-service',
         {
@@ -344,7 +350,7 @@ class N8nService {
           employee_id: requestData.frappe_employee_id,
           payroll_date: requestData.payroll_date,
           salary_component: requestData.hours >= 0 ? 'Overtime' : 'Undertime',
-          hours: Math.abs(parseFloat(requestData.hours)),
+          total_hours: totalHoursDecimal, // Combined hours + minutes as decimal
           notes
         }
       );

@@ -54,14 +54,6 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <div className="max-w-4xl mx-auto">
-                  <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-foreground mb-2">
-                      Rooche Digital
-                    </h1>
-                    <p className="text-lg text-muted-foreground">
-                      Overtime & Undertime Management System
-                    </p>
-                  </div>
                   <OvertimeRequestForm />
                 </div>
               </ProtectedRoute>

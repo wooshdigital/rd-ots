@@ -532,6 +532,16 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
+                    {/* Show approver/rejector information */}
+                    {request.approved_by && (
+                      <div className="pt-2 border-t">
+                        <p className="font-medium text-muted-foreground mb-1">
+                          {request.reject_reason ? 'Rejected By:' : 'Approved By:'}
+                        </p>
+                        <p className="text-foreground">{request.approved_by}</p>
+                      </div>
+                    )}
+
                     <div>
                       <p className="font-medium text-muted-foreground mb-1">Reason:</p>
                       <p className="text-foreground bg-muted p-3 rounded">{request.reason}</p>

@@ -312,7 +312,7 @@ export default function MyRequests() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="font-medium text-muted-foreground">Date Affected:</p>
                     <p className="text-foreground">
@@ -329,15 +329,17 @@ export default function MyRequests() {
                     <p className="font-medium text-muted-foreground">Project/Task:</p>
                     <p className="text-foreground">{request.projects_affected}</p>
                   </div>
-                  <div>
-                    <p className="font-medium text-muted-foreground">
-                      {request.reject_reason ? 'Rejected By:' : request.approved_by ? 'Approved By:' : 'Status:'}
-                    </p>
-                    <p className="text-foreground">
-                      {request.approved_by || 'Pending Review'}
-                    </p>
-                  </div>
                 </div>
+
+                {/* Show approver/rejector information */}
+                {request.approved_by && (
+                  <div className="pt-2 border-t">
+                    <p className="font-medium text-muted-foreground mb-1">
+                      {request.reject_reason ? 'Rejected By:' : 'Approved By:'}
+                    </p>
+                    <p className="text-foreground">{request.approved_by}</p>
+                  </div>
+                )}
 
                 <div>
                   <p className="font-medium text-muted-foreground mb-1">Reason:</p>

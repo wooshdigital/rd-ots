@@ -219,11 +219,12 @@ export const dbAdapter = {
     if (DB_TYPE === 'postgresql') {
       const result = await db.query(
         `INSERT INTO overtime_requests
-         (frappe_employee_id, payroll_date, hours, minutes, reason, projects_affected)
-         VALUES ($1, $2, $3, $4, $5, $6)
+         (frappe_employee_id, employee_name, payroll_date, hours, minutes, reason, projects_affected)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
         [
           data.frappe_employee_id,
+          data.employee_name,
           data.payroll_date,
           data.hours,
           data.minutes,
@@ -290,7 +291,6 @@ export const dbAdapter = {
   async approveRequest(id, approvedBy) {
     const updates = {
       approved_by: approvedBy,
-      approved_at: new Date().toISOString(),
       reject_reason: null
     };
     return await this.updateRequest(id, updates);

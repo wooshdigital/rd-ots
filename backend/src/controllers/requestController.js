@@ -4,6 +4,7 @@ import notificationRoutingService from '../services/notificationRoutingService.j
 import dbAdapter from '../config/database.js';
 import logger from '../utils/logger.js';
 import { getEmailTemplate } from '../templates/emailTemplates.js';
+import { io } from '../server.js';
 
 class RequestController {
   /**
@@ -46,6 +47,7 @@ class RequestController {
       // Step 3: Store in database directly
       const newRequest = await dbAdapter.insertRequest({
         frappe_employee_id: employee.frappe_employee_id,
+        employee_name: employee.employee_name,
         payroll_date: requestData.dateAffected,
         hours: parseFloat(requestData.numberOfHours),
         minutes: parseInt(requestData.minutes),
@@ -115,6 +117,22 @@ class RequestController {
         });
       }
 
+      // Emit real-time notification to admins via WebSocket
+      io.to('admins').emit('new-request', {
+        id: newRequest.id,
+        frappe_employee_id: employee.frappe_employee_id,
+        employee_name: employee.employee_name,
+        payroll_date: requestData.dateAffected,
+        hours: parseFloat(requestData.numberOfHours),
+        minutes: parseInt(requestData.minutes),
+        reason: requestData.reason,
+        projects_affected: requestData.projectTaskAssociated,
+        request_type: requestData.requestType,
+        created_at: new Date().toISOString()
+      });
+
+      logger.info('Real-time notification sent to admins', { requestId: newRequest.id });
+
       res.status(201).json({
         success: true,
         message: 'Request submitted successfully. Admins have been notified.',
@@ -133,17 +151,38 @@ class RequestController {
   /**
    * Get all requests with optional filtering
    * GET /api/requests
+   * SECURITY: Non-admin users can only see their own requests
    */
   async getAllRequests(req, res, next) {
     try {
+      const user = req.user; // Set by verifySession middleware
       const filters = {
-        email: req.query.email,
+        employeeId: req.query.employeeId,
         status: req.query.status,
         dateFrom: req.query.dateFrom,
         dateTo: req.query.dateTo
       };
 
-      const requests = await requestService.getAllRequests(filters);
+      // Fetch all requests matching basic filters
+      let requests = await requestService.getAllRequests(filters);
+
+      // SECURITY: Enforce role-based access control for VIEWING requests
+      // Owner, HR, and Project Coordinators can see ALL requests
+      if (user.role === 'Owner' || user.role === 'HR' || user.role === 'Project Coordinator') {
+        // No filtering - they can view all requests
+        // (Note: approval permissions are enforced separately in approveRequest/rejectRequest)
+      } else {
+        // Regular employees can only see their own requests + requests from their direct reports
+        const erpnextService = await import('../services/erpnextService.js');
+        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
+        const directReportIds = directReports.map(emp => emp.employee_id);
+
+        // Filter to show only user's own requests and direct reports' requests
+        requests = requests.filter(request =>
+          request.frappe_employee_id === user.erpnext_employee_id || // Own requests
+          directReportIds.includes(request.frappe_employee_id) // Direct reports' requests
+        );
+      }
 
       res.json({
         success: true,
@@ -158,11 +197,34 @@ class RequestController {
   /**
    * Get a single request by ID
    * GET /api/requests/:id
+   * SECURITY: Non-admin users can only see their own requests
    */
   async getRequestById(req, res, next) {
     try {
+      const user = req.user;
       const { id } = req.params;
       const request = await requestService.getRequestById(id);
+
+      // SECURITY: Check if user has permission to view this request
+      // Owner, HR, and Project Coordinators can view any request
+      if (user.role === 'Owner' || user.role === 'HR' || user.role === 'Project Coordinator') {
+        // No check needed - they have access to view all requests
+      } else {
+        // Regular employees: check if this is user's own request or from their direct report
+        const erpnextService = await import('../services/erpnextService.js');
+        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
+        const directReportIds = directReports.map(emp => emp.employee_id);
+
+        const canView = request.frappe_employee_id === user.erpnext_employee_id ||
+                        directReportIds.includes(request.frappe_employee_id);
+
+        if (!canView) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied. You can only view your own requests or those from your direct reports.'
+          });
+        }
+      }
 
       res.json({
         success: true,
@@ -176,10 +238,23 @@ class RequestController {
   /**
    * Get requests by employee
    * GET /api/requests/employee/:employeeId
+   * SECURITY: Non-admin users can only see their own requests
    */
   async getRequestsByEmployee(req, res, next) {
     try {
+      const user = req.user;
       const { employeeId } = req.params;
+
+      // SECURITY: Check if user has permission to view these requests
+      const isAdmin = user.role === 'Owner' || user.role === 'HR' || user.role === 'Project Coordinator';
+
+      if (!isAdmin && user.erpnext_employee_id !== employeeId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied. You can only view your own requests.'
+        });
+      }
+
       const requests = await requestService.getRequestsByEmployee(employeeId);
 
       res.json({
@@ -319,8 +394,32 @@ class RequestController {
 
       logger.info('Approving request', { id, approvedBy, approverRole: user.role });
 
+      // SECURITY: Verify user has permission to approve this request
+      const request = await requestService.getRequestById(id);
+
+      // Owner and HR can approve any request
+      if (user.role !== 'Owner' && user.role !== 'HR') {
+        // Check if request is from a direct report
+        const erpnextService = await import('../services/erpnextService.js');
+        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
+        const directReportIds = directReports.map(emp => emp.employee_id);
+
+        if (!directReportIds.includes(request.frappe_employee_id)) {
+          logger.warn('Unauthorized approval attempt', {
+            userId: user.email,
+            userRole: user.role,
+            requestId: id,
+            requestEmployeeId: request.frappe_employee_id
+          });
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied. You can only approve requests from your direct reports.'
+          });
+        }
+      }
+
       // Step 1: Update request status in database
-      const request = await requestService.approveRequest(id, approvedBy);
+      const updatedRequest = await requestService.approveRequest(id, approvedBy);
 
       // Step 2: Create Additional Salary in ERPNext
       let erpNextError = null;
@@ -414,8 +513,32 @@ class RequestController {
 
       logger.info('Rejecting request', { id, rejectedBy, rejectorRole: user.role });
 
+      // SECURITY: Verify user has permission to reject this request
+      const request = await requestService.getRequestById(id);
+
+      // Owner and HR can reject any request
+      if (user.role !== 'Owner' && user.role !== 'HR') {
+        // Check if request is from a direct report
+        const erpnextService = await import('../services/erpnextService.js');
+        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
+        const directReportIds = directReports.map(emp => emp.employee_id);
+
+        if (!directReportIds.includes(request.frappe_employee_id)) {
+          logger.warn('Unauthorized rejection attempt', {
+            userId: user.email,
+            userRole: user.role,
+            requestId: id,
+            requestEmployeeId: request.frappe_employee_id
+          });
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied. You can only reject requests from your direct reports.'
+          });
+        }
+      }
+
       // Update request status in database
-      const request = await requestService.rejectRequest(id, rejectedBy, reason);
+      const updatedRequest = await requestService.rejectRequest(id, rejectedBy, reason);
 
       // Send rejection notification to employee (immediate, non-blocking)
       const subject = `Your ${request.hours >= 0 ? 'Overtime' : 'Undertime'} Request Has Been Rejected`;

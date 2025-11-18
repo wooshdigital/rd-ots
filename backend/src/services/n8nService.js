@@ -344,12 +344,16 @@ class N8nService {
       const minutes = parseInt(requestData.minutes) || 0;
       const totalHoursDecimal = hours + (minutes / 60);
 
+      // Format payroll_date to YYYY-MM-DD (strip time part)
+      const payrollDate = new Date(requestData.payroll_date);
+      const formattedPayrollDate = `${payrollDate.getFullYear()}-${String(payrollDate.getMonth() + 1).padStart(2, '0')}-${String(payrollDate.getDate()).padStart(2, '0')}`;
+
       const response = await this.axiosInstance.post(
         process.env.N8N_WEBHOOK_ERPNEXT_SERVICE || '/webhook/erpnext-service',
         {
           operation: 'create_additional_salary',
           employee_id: requestData.frappe_employee_id,
-          payroll_date: requestData.payroll_date,
+          payroll_date: formattedPayrollDate,
           salary_component: requestData.hours >= 0 ? 'Overtime' : 'Undertime',
           total_hours: totalHoursDecimal, // Combined hours + minutes as decimal
           notes
@@ -402,12 +406,16 @@ class N8nService {
         salaryComponent
       });
 
+      // Format payroll_date to YYYY-MM-DD (strip time part)
+      const date = new Date(payrollDate);
+      const formattedPayrollDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
       const response = await this.axiosInstance.post(
         process.env.N8N_WEBHOOK_ERPNEXT_SERVICE || '/webhook/erpnext-service',
         {
           operation: 'check_duplicate_salary',
           employee_id: employeeId,
-          payroll_date: payrollDate,
+          payroll_date: formattedPayrollDate,
           salary_component: salaryComponent
         }
       );

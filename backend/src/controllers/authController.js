@@ -33,6 +33,9 @@ class AuthController {
       // Verify Google token and get user info
       const googleUser = await oauthService.verifyGoogleToken(code);
 
+      // Debug: Log what Google returns
+      console.log('[OAuth Debug] Google user data:', JSON.stringify(googleUser, null, 2));
+
       // Check domain access
       if (!oauthService.checkDomainAccess(googleUser.email)) {
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=unauthorized_domain`);
@@ -65,14 +68,17 @@ class AuthController {
 
         if (erpnextData) {
           const isOwner = await erpnextService.isCompanyOwner(erpnextData.employee_id);
+          const designationLower = erpnextData.designation ? erpnextData.designation.toLowerCase() : '';
 
           if (isOwner) {
             role = 'Owner';
-          } else if (erpnextData.designation && erpnextData.designation.toLowerCase().includes('hr')) {
+          } else if (designationLower.includes('human resource') ||
+                     designationLower.includes('hr ') ||
+                     designationLower.startsWith('hr') ||
+                     designationLower === 'hr') {
             role = 'HR';
-          } else if (erpnextData.designation &&
-                     (erpnextData.designation.toLowerCase().includes('coordinator') ||
-                      erpnextData.designation.toLowerCase().includes('manager'))) {
+          } else if (designationLower.includes('coordinator') ||
+                     designationLower.includes('manager')) {
             role = 'Project Coordinator';
           }
         }
@@ -105,14 +111,48 @@ class AuthController {
         user = insertResult.rows[0];
         isNewUser = true;
       } else {
-        // Existing user - update profile picture and last login
+        // Existing user - fetch ERPNext data to update role and designation
+        const erpnextData = await erpnextService.getEmployeeByEmail(googleUser.email);
+
+        // Determine role based on ERPNext data
+        let role = 'Employee'; // Default role
+
+        if (erpnextData) {
+          const isOwner = await erpnextService.isCompanyOwner(erpnextData.employee_id);
+          const designationLower = erpnextData.designation ? erpnextData.designation.toLowerCase() : '';
+
+          if (isOwner) {
+            role = 'Owner';
+          } else if (designationLower.includes('human resource') ||
+                     designationLower.includes('hr ') ||
+                     designationLower.startsWith('hr') ||
+                     designationLower === 'hr') {
+            role = 'HR';
+          } else if (designationLower.includes('coordinator') ||
+                     designationLower.includes('manager')) {
+            role = 'Project Coordinator';
+          }
+        }
+
+        // Update user with profile picture, last login, role, and ERPNext data
         const updateResult = await pool.query(`
           UPDATE users
           SET profile_picture = $1,
-              last_login = NOW()
-          WHERE email = $2
+              last_login = NOW(),
+              role = $2,
+              erpnext_employee_id = $3,
+              designation = $4,
+              reports_to = $5
+          WHERE email = $6
           RETURNING *
-        `, [googleUser.profile_picture, googleUser.email]);
+        `, [
+          googleUser.profile_picture,
+          role,
+          erpnextData?.employee_id || null,
+          erpnextData?.designation || null,
+          erpnextData?.reports_to || null,
+          googleUser.email
+        ]);
 
         user = updateResult.rows[0];
       }

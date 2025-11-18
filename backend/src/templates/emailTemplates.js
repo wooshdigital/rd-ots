@@ -59,7 +59,11 @@ export const requestSubmittedTemplate = (data) => {
  * Request Submitted - Notification to admins
  */
 export const adminNotificationTemplate = (data) => {
-  const { employeeName, employeeId, requestType, dateAffected, numberOfHours, minutes, reason, projectTaskAssociated, requestId } = data;
+  const { employeeName, employeeId, requestType, dateAffected, numberOfHours, minutes, reason, projectTaskAssociated, requestId, dashboardUrl } = data;
+
+  // Use provided dashboardUrl or default to environment variable
+  const adminDashboardUrl = dashboardUrl || process.env.FRONTEND_URL || 'https://ots.roochedigital.com';
+  const fullDashboardUrl = `${adminDashboardUrl}/admin`;
 
   return {
     subject: `New ${requestType} Request - ${employeeName}`,
@@ -100,9 +104,15 @@ export const adminNotificationTemplate = (data) => {
           <p style="margin: 10px 0 0 0;">${reason}</p>
         </div>
 
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${fullDashboardUrl}" style="display: inline-block; background-color: #007bff; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            Review Request in Admin Dashboard →
+          </a>
+        </div>
+
         <div style="background-color: #e7f3ff; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0; border-radius: 5px;">
           <p style="margin: 0;"><strong>Next Steps:</strong></p>
-          <p style="margin: 10px 0 0 0;">Please review and approve/reject this request in the admin dashboard.</p>
+          <p style="margin: 10px 0 0 0;">Please review and approve/reject this request in the admin dashboard by clicking the button above.</p>
         </div>
 
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">

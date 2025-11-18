@@ -43,11 +43,30 @@ class OAuthService {
 
       const payload = ticket.getPayload();
 
+      // Get additional user info from Google's UserInfo endpoint (includes picture)
+      let profilePicture = payload.picture; // Try from ID token first
+
+      if (!profilePicture && tokens.access_token) {
+        try {
+          // Fetch from UserInfo endpoint
+          const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: {
+              Authorization: `Bearer ${tokens.access_token}`,
+            },
+          });
+          const userInfo = await response.json();
+          profilePicture = userInfo.picture;
+          console.log('[OAuth Service] Got profile picture from UserInfo API:', profilePicture);
+        } catch (err) {
+          console.error('[OAuth Service] Failed to fetch UserInfo:', err.message);
+        }
+      }
+
       return {
         email: payload.email,
         full_name: payload.name,
         google_id: payload.sub,
-        profile_picture: payload.picture,
+        profile_picture: profilePicture,
         email_verified: payload.email_verified,
       };
     } catch (error) {

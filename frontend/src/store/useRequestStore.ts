@@ -4,6 +4,7 @@ import api from '../lib/api';
 interface OvertimeRequest {
   id: number;
   frappe_employee_id: string;
+  employee_name: string | null;
   payroll_date: string;
   hours: number;
   minutes: number;

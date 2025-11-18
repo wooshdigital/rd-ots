@@ -4,6 +4,7 @@ import cetAccessService from './cetAccessService.js';
 
 class OAuthService {
   constructor() {
+    console.log('[OAuth Service] Initializing with redirect URI:', process.env.GOOGLE_REDIRECT_URI);
     this.client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,

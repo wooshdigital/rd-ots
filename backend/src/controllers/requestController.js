@@ -6,6 +6,34 @@ import logger from '../utils/logger.js';
 import { getEmailTemplate } from '../templates/emailTemplates.js';
 import { io } from '../server.js';
 
+/**
+ * Helper: Check if user can approve a specific request
+ * Based on ERPNext reports_to hierarchy + HR delegation
+ */
+function canUserApproveRequest(user, request, directReportIds, ownerDirectReportIds = []) {
+  // Cannot approve own request
+  if (request.frappe_employee_id === user.erpnext_employee_id) {
+    return false;
+  }
+
+  // Cannot approve already processed requests
+  if (request.approved_by || request.reject_reason) {
+    return false;
+  }
+
+  // Check if request is from a direct report
+  if (directReportIds.includes(request.frappe_employee_id)) {
+    return true;
+  }
+
+  // HR can also approve Owner's direct reports (delegation)
+  if (user.role === 'HR' && ownerDirectReportIds.includes(request.frappe_employee_id)) {
+    return true;
+  }
+
+  return false;
+}
+
 class RequestController {
   /**
    * Submit a new overtime/undertime request
@@ -166,22 +194,56 @@ class RequestController {
       // Fetch all requests matching basic filters
       let requests = await requestService.getAllRequests(filters);
 
+      // Get direct reports for approval permission checking
+      let directReportIds = [];
+      let ownerDirectReportIds = [];
+
+      if (user.erpnext_employee_id) {
+        const erpnextService = await import('../services/erpnextService.js');
+
+        // Get user's own direct reports
+        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
+        directReportIds = directReports.map(emp => emp.employee_id);
+
+        // If user is HR, also get Owner's direct reports (delegation)
+        // HR acts as delegate for the company owner (RJ - HR-EMP-00001)
+        if (user.role === 'HR') {
+          try {
+            // RJ's employee ID from ERPNext
+            const ownerEmployeeId = 'HR-EMP-00001';
+            const ownerReports = await erpnextService.default.getDirectReports(ownerEmployeeId);
+            ownerDirectReportIds = ownerReports.map(emp => emp.employee_id);
+            logger.info('HR delegation: fetched Owner direct reports', {
+              count: ownerDirectReportIds.length,
+              ownerEmployeeId
+            });
+          } catch (error) {
+            logger.warn('Failed to fetch Owner direct reports for HR delegation', { error: error.message });
+          }
+        }
+      }
+
       // SECURITY: Enforce role-based access control for VIEWING requests
       // Owner, HR, and Project Coordinators can see ALL requests
       if (user.role === 'Owner' || user.role === 'HR' || user.role === 'Project Coordinator') {
         // No filtering - they can view all requests
-        // (Note: approval permissions are enforced separately in approveRequest/rejectRequest)
+        // Add approval permission flag to each request
+        requests = requests.map(request => ({
+          ...request,
+          can_approve: canUserApproveRequest(user, request, directReportIds, ownerDirectReportIds)
+        }));
       } else {
         // Regular employees can only see their own requests + requests from their direct reports
-        const erpnextService = await import('../services/erpnextService.js');
-        const directReports = await erpnextService.default.getDirectReports(user.erpnext_employee_id);
-        const directReportIds = directReports.map(emp => emp.employee_id);
-
         // Filter to show only user's own requests and direct reports' requests
-        requests = requests.filter(request =>
-          request.frappe_employee_id === user.erpnext_employee_id || // Own requests
-          directReportIds.includes(request.frappe_employee_id) // Direct reports' requests
-        );
+        requests = requests
+          .filter(request =>
+            request.frappe_employee_id === user.erpnext_employee_id || // Own requests
+            directReportIds.includes(request.frappe_employee_id) // Direct reports' requests
+          )
+          .map(request => ({
+            ...request,
+            can_approve: canUserApproveRequest(user, request, directReportIds, ownerDirectReportIds)
+          }));
       }
 
       res.json({
@@ -193,6 +255,7 @@ class RequestController {
       next(error);
     }
   }
+
 
   /**
    * Get a single request by ID

@@ -24,6 +24,7 @@ interface OvertimeRequest {
   reject_reason: string | null;
   created_at: string;
   updated_at: string;
+  can_approve?: boolean;
 }
 
 export default function MyRequests() {

@@ -546,7 +546,7 @@ export default function AdminDashboard() {
                       </div>
                     )}
 
-                    {!request.approved_by && !request.reject_reason && (
+                    {!request.approved_by && !request.reject_reason && request.can_approve && (
                       <div className="flex gap-2 pt-4">
                         <Button
                           onClick={() => handleApprove(request)}

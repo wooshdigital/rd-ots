@@ -191,8 +191,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        4128,
-        4720
+        -1936,
+        4480
       ]
     },
     {
@@ -226,59 +226,8 @@
       "type": "n8n-nodes-base.erpNext",
       "typeVersion": 1,
       "position": [
-        4320,
-        4352
-      ],
-      "credentials": {
-        "erpNextApi": {
-          "id": "8gEOv9ig27O1vHWU",
-          "name": "ERPNext account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "docType": "Additional%20Salary",
-        "properties": {
-          "customProperty": [
-            {
-              "field": "employee",
-              "value": "={{ $json.body.employee_id }}"
-            },
-            {
-              "field": "payroll_date",
-              "value": "={{ $json.body.payroll_date }}"
-            },
-            {
-              "field": "salary_component",
-              "value": "={{ $json.body.salary_component }}"
-            },
-            {
-              "field": "custom_number_of_hours",
-              "value": "={{ $json.body.hours }}"
-            },
-            {
-              "field": "amount",
-              "value": "0"
-            },
-            {
-              "field": "docstatus",
-              "value": "1"
-            },
-            {
-              "field": "custom_notes",
-              "value": "={{ $json.body.notes }}"
-            }
-          ]
-        }
-      },
-      "id": "cb8aca20-ccc7-458a-a4c5-9e2f872100fe",
-      "name": "Create Additional Salary",
-      "type": "n8n-nodes-base.erpNext",
-      "typeVersion": 1,
-      "position": [
-        4320,
-        4528
+        -1712,
+        3824
       ],
       "credentials": {
         "erpNextApi": {
@@ -299,8 +248,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4320,
-        4704
+        -1712,
+        4208
       ],
       "credentials": {
         "erpNextApi": {
@@ -321,8 +270,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4320,
-        4976
+        -1712,
+        4592
       ],
       "credentials": {
         "erpNextApi": {
@@ -356,8 +305,8 @@
       "type": "n8n-nodes-base.erpNext",
       "typeVersion": 1,
       "position": [
-        4320,
-        5120
+        -1712,
+        4784
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -398,8 +347,8 @@
       "type": "n8n-nodes-base.erpNext",
       "typeVersion": 1,
       "position": [
-        4320,
-        5264
+        -1712,
+        4976
       ],
       "credentials": {
         "erpNextApi": {
@@ -439,8 +388,8 @@
       "type": "n8n-nodes-base.erpNext",
       "typeVersion": 1,
       "position": [
-        4320,
-        5408
+        -1712,
+        5168
       ],
       "credentials": {
         "erpNextApi": {
@@ -448,21 +397,6 @@
           "name": "ERPNext account 2"
         }
       }
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
-      },
-      "id": "e1828d4f-fb7e-4fc5-956b-3c2ce7ef8110",
-      "name": "Respond Success",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        4752,
-        4720
-      ]
     },
     {
       "parameters": {
@@ -477,8 +411,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        4336,
-        5552
+        -1712,
+        5360
       ]
     },
     {
@@ -493,8 +427,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        3920,
-        4720
+        -2160,
+        4592
       ],
       "webhookId": "erpnext-service-webhook-id"
     },
@@ -509,8 +443,8 @@
       "type": "n8n-nodes-base.erpNext",
       "typeVersion": 1,
       "position": [
-        4320,
-        4848
+        -1712,
+        4400
       ],
       "credentials": {
         "erpNextApi": {
@@ -518,6 +452,73 @@
           "name": "ERPNext account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "docType": "Additional%20Salary",
+        "properties": {
+          "customProperty": [
+            {
+              "field": "employee",
+              "value": "={{ $json.body.employee_id }}"
+            },
+            {
+              "field": "payroll_date",
+              "value": "={{ $json.body.payroll_date }}"
+            },
+            {
+              "field": "salary_component",
+              "value": "={{ $json.body.salary_component }}"
+            },
+            {
+              "field": "custom_number_of_hours",
+              "value": "={{ $json.body.total_hours }}"
+            },
+            {
+              "field": "amount",
+              "value": "={{ parseFloat(0) }}"
+            },
+            {
+              "field": "docstatus",
+              "value": "1"
+            },
+            {
+              "field": "custom_notes",
+              "value": "={{ $json.body.notes }}"
+            }
+          ]
+        }
+      },
+      "id": "14e33b4a-1510-4578-b500-2d7bce818e60",
+      "name": "Create Additional Salary",
+      "type": "n8n-nodes-base.erpNext",
+      "typeVersion": 1,
+      "position": [
+        -1712,
+        4016
+      ],
+      "credentials": {
+        "erpNextApi": {
+          "id": "36CTQ7mtkjLbrhVF",
+          "name": "ERPNext account"
+        }
+      },
+      "notes": "Updated to use total_hours (decimal) instead of separate hours/minutes"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "e1828d4f-fb7e-4fc5-956b-3c2ce7ef8110",
+      "name": "Respond Error/Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1488,
+        4496
+      ]
     }
   ],
   "connections": {
@@ -592,18 +593,7 @@
       "main": [
         [
           {
-            "node": "Respond Success",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Additional Salary": {
-      "main": [
-        [
-          {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
@@ -614,7 +604,7 @@
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
@@ -625,7 +615,7 @@
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
@@ -636,7 +626,7 @@
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
@@ -647,7 +637,7 @@
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
@@ -658,7 +648,7 @@
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
@@ -680,11 +670,23 @@
       "main": [
         [
           {
-            "node": "Respond Success",
+            "node": "Respond Error/Success",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Create Additional Salary": {
+      "main": [
+        [
+          {
+            "node": "Respond Error/Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
@@ -693,20 +695,25 @@
       {
         "headers": {
           "host": "n8n.roochedigital.com",
-          "user-agent": "curl/8.16.0",
-          "content-length": "29",
-          "accept": "*/*",
+          "user-agent": "axios/1.13.2",
+          "content-length": "306",
+          "accept": "application/json, text/plain, */*",
+          "accept-encoding": "gzip, compress, deflate, br",
           "content-type": "application/json",
-          "via": "2.0 Caddy",
-          "x-forwarded-for": "119.111.178.18",
+          "via": "1.1 Caddy",
+          "x-forwarded-for": "159.65.11.83",
           "x-forwarded-host": "n8n.roochedigital.com",
-          "x-forwarded-proto": "https",
-          "accept-encoding": "gzip"
+          "x-forwarded-proto": "https"
         },
         "params": {},
         "query": {},
         "body": {
-          "operation": "get_hr_staff"
+          "operation": "create_additional_salary",
+          "employee_id": "HR-EMP-00103",
+          "payroll_date": "2025-11-17",
+          "salary_component": "Overtime",
+          "total_hours": 1.5,
+          "notes": "Reason: Just a test but please approve to see the outcome\nProjects: internal-primdream\nApproved by: dionela@rooche.digital\nRequested on: 11/17/2025"
         },
         "webhookUrl": "https://n8n.roochedigital.com/webhook/erpnext-service",
         "executionMode": "production"

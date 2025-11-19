@@ -1,7 +1,6 @@
 import express from 'express';
 import adminController from '../controllers/adminController.js';
-import { verifySession } from '../middleware/sessionMiddleware.js';
-import { canApprove } from '../middleware/authMiddleware.js';
+import { verifySession, canApprove } from '../middleware/auth.js';
 
 const router = express.Router();
 

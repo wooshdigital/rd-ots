@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import { Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Bell, BellOff, Calendar as CalendarIcon, Filter, X } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Clock, AlertCircle, Bell, BellOff, Calendar as CalendarIcon, Filter, X, Activity } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Textarea } from '../components/ui/textarea';
@@ -30,6 +30,17 @@ interface OvertimeRequest {
   updated_at: string;
 }
 
+interface ActivityLog {
+  id: number;
+  activity_type: string;
+  description: string;
+  details: any;
+  status: string;
+  performed_by: string;
+  request_id: number | null;
+  created_at: string;
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const {
@@ -56,6 +67,10 @@ export default function AdminDashboard() {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Activity logs state
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [activityLogsLoading, setActivityLogsLoading] = useState(false);
+
   // Fetch all requests
   const fetchAllRequests = async () => {
     try {
@@ -74,6 +89,30 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Failed to fetch requests:', err);
+    }
+  };
+
+  // Fetch activity logs
+  const fetchActivityLogs = async () => {
+    try {
+      setActivityLogsLoading(true);
+      const token = localStorage.getItem('session_token');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3009/api'}/admin/activity-logs?limit=100`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setActivityLogs(data.data);
+      } else {
+        console.error('Failed to fetch activity logs:', data.error || data.message);
+      }
+    } catch (err) {
+      console.error('Failed to fetch activity logs:', err);
+    } finally {
+      setActivityLogsLoading(false);
     }
   };
 
@@ -132,6 +171,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchAllRequests();
   }, []);
+
+  // Fetch activity logs when tab changes to activity-logs
+  useEffect(() => {
+    if (activeTab === 'activity-logs') {
+      fetchActivityLogs();
+    }
+  }, [activeTab]);
 
   // Request notification permission
   const handleEnableNotifications = async () => {
@@ -249,6 +295,62 @@ export default function AdminDashboard() {
     pending: allRequests.filter(r => !r.approved_by).length,
     approved: allRequests.filter(r => r.approved_by && !r.reject_reason).length,
     rejected: allRequests.filter(r => r.reject_reason).length,
+  };
+
+  const getActivityStatusBadge = (status: string) => {
+    switch (status) {
+      case 'success':
+        return (
+          <Badge className="bg-green-600 flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Success
+          </Badge>
+        );
+      case 'failed':
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            Failed
+          </Badge>
+        );
+      case 'warning':
+        return (
+          <Badge variant="secondary" className="bg-yellow-600 text-white flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Warning
+          </Badge>
+        );
+      case 'info':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Info
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getActivityTypeLabel = (type: string) => {
+    switch (type) {
+      case 'cron_job':
+        return 'Cron Job';
+      case 'notification_sent':
+        return 'Notification';
+      case 'email_sent':
+        return 'Email';
+      case 'daily_reminder':
+        return 'Daily Reminder';
+      case 'request_submitted':
+        return 'Request Submitted';
+      case 'request_approved':
+        return 'Request Approved';
+      case 'request_rejected':
+        return 'Request Rejected';
+      default:
+        return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
   };
 
   return (
@@ -447,21 +549,29 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
           <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
           <TabsTrigger value="approved">Approved ({stats.approved})</TabsTrigger>
           <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
+          <TabsTrigger value="activity-logs">
+            <Activity className="h-4 w-4 mr-1" />
+            Activity Logs
+          </TabsTrigger>
         </TabsList>
 
         {/* Results Count */}
-        <div className="my-4">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredRequests.length} {activeTab !== 'all' ? activeTab : ''} request{filteredRequests.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+        {activeTab !== 'activity-logs' && (
+          <div className="my-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredRequests.length} {activeTab !== 'all' ? activeTab : ''} request{filteredRequests.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        )}
 
-        <TabsContent value={activeTab} className="mt-6">
+        {/* Requests Tabs Content */}
+        {activeTab !== 'activity-logs' && (
+          <TabsContent value={activeTab} className="mt-6">
           {/* Loading State */}
           {isLoading && (
             <div className="flex justify-center items-center py-12">
@@ -573,6 +683,95 @@ export default function AdminDashboard() {
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject
                         </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          </TabsContent>
+        )}
+
+        {/* Activity Logs Tab Content */}
+        <TabsContent value="activity-logs" className="mt-6">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {activityLogs.length} activity log{activityLogs.length !== 1 ? 's' : ''}
+            </p>
+            <Button
+              onClick={fetchActivityLogs}
+              variant="outline"
+              size="sm"
+              disabled={activityLogsLoading}
+            >
+              {activityLogsLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                'Refresh'
+              )}
+            </Button>
+          </div>
+
+          {/* Loading State */}
+          {activityLogsLoading && activityLogs.length === 0 && (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!activityLogsLoading && activityLogs.length === 0 && (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Activity className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No activity logs found</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Activity Logs List */}
+          {activityLogs.length > 0 && (
+            <div className="grid gap-4">
+              {activityLogs.map((log) => (
+                <Card key={log.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline">{getActivityTypeLabel(log.activity_type)}</Badge>
+                          {getActivityStatusBadge(log.status)}
+                        </div>
+                        <CardTitle className="text-base mt-2">{log.description}</CardTitle>
+                        <CardDescription className="mt-1">
+                          {format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss')}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="font-medium text-muted-foreground">Performed By:</p>
+                        <p className="text-foreground">{log.performed_by}</p>
+                      </div>
+                      {log.request_id && (
+                        <div>
+                          <p className="font-medium text-muted-foreground">Request ID:</p>
+                          <p className="text-foreground">#{log.request_id}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {log.details && (
+                      <div>
+                        <p className="font-medium text-muted-foreground mb-2">Details:</p>
+                        <pre className="text-xs bg-muted p-3 rounded overflow-x-auto">
+                          {JSON.stringify(JSON.parse(log.details), null, 2)}
+                        </pre>
                       </div>
                     )}
                   </CardContent>

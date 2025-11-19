@@ -1,4 +1,4 @@
-import dbAdapter from '../config/dbAdapter.js';
+import dbAdapter from '../config/database.js';
 import logger from '../utils/logger.js';
 
 /**

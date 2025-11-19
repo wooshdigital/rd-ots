@@ -1,6 +1,7 @@
 import n8nService from '../services/n8nService.js';
 import requestService from '../services/requestService.js';
 import notificationRoutingService from '../services/notificationRoutingService.js';
+import activityLogService from '../services/activityLogService.js';
 import dbAdapter from '../config/database.js';
 import logger from '../utils/logger.js';
 import { getEmailTemplate } from '../templates/emailTemplates.js';
@@ -136,8 +137,29 @@ class RequestController {
             employeeName: employee.employee_name,
             requestId: newRequest.id
           }
-        ).catch(err => {
+        ).then(() => {
+          // Log successful notification to activity log
+          activityLogService.logRequestSubmitted(
+            requestData.email,
+            allRecipients,
+            newRequest.id
+          ).catch(err => {
+            logger.error('Failed to log request submission activity', { error: err.message });
+          });
+        }).catch(err => {
           logger.error('Failed to send admin notification emails', { error: err.message });
+          // Log failed notification
+          activityLogService.logNotificationSent(
+            allRecipients,
+            adminSubject,
+            {
+              requestId: newRequest.id,
+              notificationType: 'request_submission',
+              status: activityLogService.STATUS.FAILED
+            }
+          ).catch(logErr => {
+            logger.error('Failed to log notification failure', { error: logErr.message });
+          });
         });
       } else {
         logger.warn('No notification recipients found (no HR staff or approvers)', {
@@ -530,7 +552,20 @@ class RequestController {
             subject,
             message,
             request
-          ).catch(err => {
+          ).then(() => {
+            // Log approval notification sent
+            activityLogService.logNotificationSent(
+              [employeeDetails.company_email],
+              subject,
+              {
+                requestId: id,
+                notificationType: 'approval',
+                status: activityLogService.STATUS.SUCCESS
+              }
+            ).catch(err => {
+              logger.error('Failed to log approval notification', { error: err.message });
+            });
+          }).catch(err => {
             logger.error('Failed to send approval notification', { error: err.message });
           });
         }
@@ -635,7 +670,20 @@ class RequestController {
             subject,
             message,
             request
-          ).catch(err => {
+          ).then(() => {
+            // Log rejection notification sent
+            activityLogService.logNotificationSent(
+              [employeeDetails.company_email],
+              subject,
+              {
+                requestId: id,
+                notificationType: 'rejection',
+                status: activityLogService.STATUS.SUCCESS
+              }
+            ).catch(err => {
+              logger.error('Failed to log rejection notification', { error: err.message });
+            });
+          }).catch(err => {
             logger.error('Failed to send rejection notification', { error: err.message });
           });
         }

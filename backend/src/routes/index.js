@@ -2,6 +2,7 @@ import express from 'express';
 import requestRoutes from './requestRoutes.js';
 import settingsRoutes from './settingsRoutes.js';
 import authRoutes from './authRoutes.js';
+import adminRoutes from './adminRoutes.js';
 
 const router = express.Router();
 
@@ -9,6 +10,7 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 router.use('/requests', requestRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/admin', adminRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
@@ -19,6 +21,7 @@ router.get('/', (req, res) => {
       auth: '/api/auth',
       requests: '/api/requests',
       settings: '/api/settings',
+      admin: '/api/admin',
       health: '/health'
     }
   });

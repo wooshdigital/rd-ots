@@ -12,6 +12,7 @@ import rateLimit from 'express-rate-limit';
 import logger from './utils/logger.js';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import schedulerService from './services/schedulerService.js';
 
 dotenv.config();
 
@@ -115,22 +116,35 @@ app.use('*', (req, res) => {
 
 // Start server
 const HOST = process.env.HOST || '0.0.0.0';
-httpServer.listen(PORT, HOST, () => {
+httpServer.listen(PORT, HOST, async () => {
   logger.info(`Server running on ${HOST}:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   logger.info(`WebSocket server initialized and ready for connections`);
   if (HOST === '0.0.0.0') {
     logger.info(`Server accessible on all network interfaces`);
+  }
+
+  // Initialize scheduler service for cron jobs
+  try {
+    await schedulerService.initialize();
+    logger.info('Scheduler service started successfully');
+  } catch (error) {
+    logger.error('Failed to start scheduler service', {
+      error: error.message,
+      stack: error.stack
+    });
   }
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
+  schedulerService.stopAll();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT signal received: closing HTTP server');
+  schedulerService.stopAll();
   process.exit(0);
 });
 

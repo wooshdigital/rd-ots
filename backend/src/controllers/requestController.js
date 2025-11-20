@@ -509,20 +509,20 @@ class RequestController {
       // Step 2: Create Additional Salary in ERPNext
       let erpNextError = null;
       try {
-        await n8nService.createAdditionalSalary(request);
+        await n8nService.createAdditionalSalary(updatedRequest);
         logger.info('Additional Salary created in ERPNext', { requestId: id });
       } catch (erpError) {
         erpNextError = erpError.message;
         logger.error('Failed to create Additional Salary in ERPNext', {
           error: erpError.message,
           requestId: id,
-          employeeId: request.frappe_employee_id
+          employeeId: updatedRequest.frappe_employee_id
         });
         // Continue even if ERPNext creation fails - can be done manually
       }
 
       // Step 3: Send approval notification to employee (immediate, non-blocking)
-      const subject = `Your ${request.hours >= 0 ? 'Overtime' : 'Undertime'} Request Has Been Approved`;
+      const subject = `Your ${updatedRequest.hours >= 0 ? 'Overtime' : 'Undertime'} Request Has Been Approved`;
       const message = `
         <!DOCTYPE html>
         <html>
@@ -532,8 +532,8 @@ class RequestController {
           <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <strong>Request Details:</strong>
             <ul>
-              <li><strong>Date:</strong> ${new Date(request.payroll_date).toLocaleDateString()}</li>
-              <li><strong>Hours:</strong> ${Math.abs(request.hours)}.${request.minutes || 0}</li>
+              <li><strong>Date:</strong> ${new Date(updatedRequest.payroll_date).toLocaleDateString()}</li>
+              <li><strong>Hours:</strong> ${Math.abs(updatedRequest.hours)}.${updatedRequest.minutes || 0}</li>
               <li><strong>Status:</strong> <span style="color: #28a745; font-weight: bold;">Approved</span></li>
             </ul>
           </div>
@@ -545,13 +545,13 @@ class RequestController {
 
       // Get employee email to send notification
       try {
-        const employeeDetails = await n8nService.getEmployeeDetails(request.frappe_employee_id);
+        const employeeDetails = await n8nService.getEmployeeDetails(updatedRequest.frappe_employee_id);
         if (employeeDetails?.company_email) {
           n8nService.sendNotification(
             [employeeDetails.company_email],
             subject,
             message,
-            request
+            updatedRequest
           ).then(() => {
             // Log approval notification sent
             activityLogService.logNotificationSent(
@@ -580,7 +580,7 @@ class RequestController {
         message: erpNextError
           ? `Request approved successfully. Note: ${erpNextError}. The Additional Salary must be created manually in ERPNext.`
           : 'Request approved successfully. Additional Salary has been created in ERPNext.',
-        data: request,
+        data: updatedRequest,
         ...(erpNextError && {
           warning: 'Additional Salary creation failed in ERPNext',
           erpNextError
@@ -639,7 +639,7 @@ class RequestController {
       const updatedRequest = await requestService.rejectRequest(id, rejectedBy, reason);
 
       // Send rejection notification to employee (immediate, non-blocking)
-      const subject = `Your ${request.hours >= 0 ? 'Overtime' : 'Undertime'} Request Has Been Rejected`;
+      const subject = `Your ${updatedRequest.hours >= 0 ? 'Overtime' : 'Undertime'} Request Has Been Rejected`;
       const message = `
         <!DOCTYPE html>
         <html>
@@ -649,8 +649,8 @@ class RequestController {
           <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <strong>Request Details:</strong>
             <ul>
-              <li><strong>Date:</strong> ${new Date(request.payroll_date).toLocaleDateString()}</li>
-              <li><strong>Hours:</strong> ${Math.abs(request.hours)}.${request.minutes || 0}</li>
+              <li><strong>Date:</strong> ${new Date(updatedRequest.payroll_date).toLocaleDateString()}</li>
+              <li><strong>Hours:</strong> ${Math.abs(updatedRequest.hours)}.${updatedRequest.minutes || 0}</li>
               <li><strong>Status:</strong> <span style="color: #dc3545; font-weight: bold;">Rejected</span></li>
               <li><strong>Reason for rejection:</strong> ${reason}</li>
             </ul>
@@ -663,13 +663,13 @@ class RequestController {
 
       // Get employee email to send notification
       try {
-        const employeeDetails = await n8nService.getEmployeeDetails(request.frappe_employee_id);
+        const employeeDetails = await n8nService.getEmployeeDetails(updatedRequest.frappe_employee_id);
         if (employeeDetails?.company_email) {
           n8nService.sendNotification(
             [employeeDetails.company_email],
             subject,
             message,
-            request
+            updatedRequest
           ).then(() => {
             // Log rejection notification sent
             activityLogService.logNotificationSent(
@@ -696,7 +696,7 @@ class RequestController {
       res.json({
         success: true,
         message: 'Request rejected successfully',
-        data: request
+        data: updatedRequest
       });
     } catch (error) {
       next(error);
